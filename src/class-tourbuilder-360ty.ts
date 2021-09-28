@@ -808,28 +808,29 @@ for (var prop in this.tour_params){
 
 addHotspotListeners = () => {
 	if(!this.elements.panoContainer){
-		throw new Error("can't add hotspot listeners, if no panoContainer is declared")
-	}
-	var hotspots = this.elements.panoContainer.getElementsByClassName("ggskin_hotspot");
-	for(let i = 0; i<hotspots.length;i++){
-	hotspots[i].addEventListener("mouseover",() => {
-	var timesCalled = 0;
-	var hn_interval = setInterval(() => {
-		if(timesCalled < 25){
-		if(this.pano && this.pano.hotspot){
-			var hotspot = this.pano.hotspot;
-		}
-		if(hotspot.url != ""){
-			this.hovered_node = hotspot;
-			clearInterval(hn_interval);
-		}else{
-			timesCalled++
-		}
-		}else{
-			clearInterval(hn_interval);
-		}
-	},10);
-	});
+		console.warn("can't add hotspot listeners, if no panoContainer is declared")
+	}else{
+		var hotspots = this.elements.panoContainer.getElementsByClassName("ggskin_hotspot");
+		for(let i = 0; i<hotspots.length;i++){
+		hotspots[i].addEventListener("mouseover",() => {
+		var timesCalled = 0;
+		var hn_interval = setInterval(() => {
+			if(timesCalled < 25){
+			if(this.pano && this.pano.hotspot){
+				var hotspot = this.pano.hotspot;
+			}
+			if(hotspot.url != ""){
+				this.hovered_node = hotspot;
+				clearInterval(hn_interval);
+			}else{
+				timesCalled++
+			}
+			}else{
+				clearInterval(hn_interval);
+			}
+		},10);
+		});
+		
 	hotspots[i].addEventListener("mouseup",() => {
 		if(this.hovered_node!.url.includes("http")){
 		var hotspotURL = this.hovered_node!.url;
@@ -855,6 +856,8 @@ addHotspotListeners = () => {
             this.addHotspotListeners();
         });
     }
+	}
+	
 }
 
 setActiveNode = (nodeID: number) => {

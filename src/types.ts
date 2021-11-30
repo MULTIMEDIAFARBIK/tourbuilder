@@ -126,7 +126,7 @@ export interface ResponsiveParams{
 }
 
 export interface SkinVariable{
-    [key: string]: string;
+    [key: string]: string | boolean;
 }
 
 export interface TourNode {

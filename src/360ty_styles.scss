@@ -1,28 +1,28 @@
 
-	.panel-farbe{
-        border-color: #ae8b57 !important;
+    [id^="pano_container_360ty_"] .panel-farbe{
+        border-color: #ae8b57;
     }
-    .panel-hotspot-farbe{
-        border-color: #ae8b57 !important;
-        background-color: #ae8b5720 !important;
+    [id^="pano_container_360ty_"] .panel-hotspot-farbe{
+        border-color: #ae8b57;
+        background-color: #ae8b5720;
     }
-    .panel-button-farbe{
-        background: #ae8b57 !important;
+    [id^="pano_container_360ty_"] .panel-button-farbe{
+        background: #ae8b57;
     }
-    .panel-triangle{
-        width:0 !important;
-        height:0 !important;
-        border-top: 12px solid transparent !important;
-        border-bottom: 12px solid transparent !important;
-        border-left: 12px solid #ae8b57 !important;
+    [id^="pano_container_360ty_"] .panel-triangle{
+        width:0 ;
+        height:0 ;
+        border-top: 12px solid transparent ;
+        border-bottom: 12px solid transparent ;
+        border-left: 12px solid #ae8b57 ;
     }
     @media (min-width: 500px) and (min-height: 750px){
-        .panel-triangle{
-            width:0 !important;
-            height:0 !important;
-            border-top: 16px solid transparent !important;
-            border-bottom: 16px solid transparent !important;
-            border-left: 16px solid #ae8b57 !important;
+        [id^="pano_container_360ty_"]  .panel-triangle{
+            width:0 ;
+            height:0 ;
+            border-top: 16px solid transparent ;
+            border-bottom: 16px solid transparent ;
+            border-left: 16px solid #ae8b57 ;
         }
     }
 [id^="tourbuilder_360ty_"]{

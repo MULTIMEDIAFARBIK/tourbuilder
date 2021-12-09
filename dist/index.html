@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tourbuilder Test</title>
     <link rel = "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-  <script type="module" crossorigin src="/assets/index.90ce83cf.js"></script>
+  <script type="module" crossorigin src="/assets/index.b7568e66.js"></script>
     <link rel="stylesheet" href="/assets/index.1f71d4c9.css">
   </head>
 <body>
@@ -16,36 +16,29 @@
         let interval = setInterval(()=>{
             if(window["Pano_360ty"]){
                 clearInterval(interval)
-                var tour_360ty = new Pano_360ty("360ty_container","https://rufanalodge.360ty.cloud/");
-                tour_360ty.setDimensions("100%","21:9");
+                var tour_360ty = new Pano_360ty("360ty_container","https://oetztalsommer.360ty.cloud/");
+                tour_360ty.setDimensions("100%","16:9");
                 tour_360ty.setHorizontalAlignment("center");
-                tour_360ty.setStartNode(1);
-                tour_360ty.setViewingParameter(65,0.05,10.7);
+                tour_360ty.setStartNode(33);
+                tour_360ty.setViewingParameter(70.00,-21.61,113.95);
                 tour_360ty.setSingleImage(false);
-                tour_360ty.setShareButtonVisibility(true);
-                tour_360ty.setImpressumVisibility(false);
+                tour_360ty.setShareButtonVisibility(false);
+                tour_360ty.setImpressumVisibility(true);
                 tour_360ty.setDimensions_tablet("100%","16:9");
                 tour_360ty.setHorizontalAlignment_tablet("center");
                 tour_360ty.setSingleImage_tablet(false);
                 tour_360ty.setShareButtonVisibility_tablet(false);
-                tour_360ty.setImpressumVisibility_tablet(false);
-                tour_360ty.setDimensions_mobile("100%","16:9");
+                tour_360ty.setImpressumVisibility_tablet(true);
+                tour_360ty.setDimensions_mobile("100%","9:16");
                 tour_360ty.setHorizontalAlignment_mobile("center");
                 tour_360ty.setSingleImage_mobile(false);
                 tour_360ty.setShareButtonVisibility_mobile(false);
                 tour_360ty.setImpressumVisibility_mobile(false);
-                tour_360ty.setBackgroundColor("#000000","#FFFFFF")
-                tour_360ty.setSkinVariables([{website:"https://website.com"},{buchungslink:"test"}])
-                tour_360ty.addKeyframe(70,-2.49,-20.15,0.05,"Mousewheel",12);
-                tour_360ty.addKeyframe(70,4.61,121.56,0.05,"Mousewheel",10);
-                tour_360ty.addKeyframe(70,-3.73,-58.93,0.05,"Mousewheel",6);
 
-                tour_360ty.setMovementLoopAmount(10);
-                tour_360ty.onMovementAborted = ()=>{console.log("movement aborted")}
-                tour_360ty.onMovementFinished = ()=>{console.log("movement finished")}
-                tour_360ty.init().then(()=>{
-                    console.log("init finsished")
-                });
+                tour_360ty.removeExternalHotspots();
+                tour_360ty.addNodeTitleFilter("bike",false);
+                
+                tour_360ty.init();
                 window.tour_360ty = tour_360ty
         }
 

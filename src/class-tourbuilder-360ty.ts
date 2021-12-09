@@ -2,7 +2,7 @@
 import pano2vrSkin from './skin_module.js';*/
 import pano2vrPlayer from "./pano2vr_player.js";
 import pano2vrSkin from "./skin_module.js";
-import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, NodeTitleFilter, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
+import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
 
 declare const window : any;
 
@@ -642,7 +642,7 @@ sleep = (milliseconds:number) =>{
 	}
 }
 runMovement = (keyframe:MoveKeyframe) =>{
-	return new Promise<void>((resolve, reject) =>{
+	return new Promise<void>((resolve) =>{
 		this.pano.moveTo(keyframe.pan, keyframe.tilt, keyframe.fov,keyframe.speed,0,1);
 		let moveInterval = setInterval(async()=>{
 			if(this.pano.getPan().toFixed(2) === keyframe.pan.toFixed(2) && this.pano.getFov().toFixed(2) === keyframe.fov.toFixed(2) && keyframe.tilt.toFixed(2) === keyframe.tilt.toFixed(2)){

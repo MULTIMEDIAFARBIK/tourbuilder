@@ -63,7 +63,10 @@ export interface Elements {
     startValueSetter_button : null | HTMLElement;
     slidesButton : null | HTMLElement;
 }
-
+export interface NodeTitleFilter {
+    filter: string,
+    caseSensitive?: boolean,
+}
 export interface TourParams {
     basepath : string;
     node: null | undefined | number;
@@ -71,6 +74,9 @@ export interface TourParams {
     tilt: null | undefined | number;
     pan: null | undefined | number;
     roll: null | undefined | number;
+    nodeFilter : NodeTitleFilter[];
+    removeExternals: boolean;
+    removeDrones: boolean;
     confFile? : string;
 }
 
@@ -85,6 +91,7 @@ export interface MoveKeyframe{
     speed : number;
     locked_controls : ControlsLock;
     node? : number;
+    pause : number;
 }
 
 export interface MovementParams {

@@ -2,7 +2,7 @@
 import pano2vrSkin from './skin_module.js';*/
 import pano2vrPlayer from "./pano2vr_player.js";
 import pano2vrSkin from "./skin_module.js";
-import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
+import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, NodeTitleFilter, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
 
 declare const window : any;
 
@@ -43,6 +43,9 @@ export default class Pano_360ty{
 	};
 	tour_params: TourParams = {
 		basepath : "",
+		nodeFilter: [],
+		removeExternals: false,
+		removeDrones: false,
 		node : null,
 		fov : null,
 		tilt : null,
@@ -54,7 +57,7 @@ export default class Pano_360ty{
 		delay : 0,
 		loop_amount : 1,
 		moveSpeed : 1,
-		movementAborted : false
+		movementAborted : false,
 	}
 	addons_params: AddonsParams = {
 		singleImage : false,
@@ -299,6 +302,15 @@ setSkinClass = (newClass: typeof pano2vrSkin) => {
 useBasepathSkin = () =>{
 	this.skinClass = this.tour_params.basepath + "skin.js";
 }
+addNodeTitleFilter = (filter: string, caseSensitive?: boolean) =>{
+	this.tour_params.nodeFilter.push({filter,caseSensitive})
+}
+removeExternalHotspots = () =>{
+	this.tour_params.removeExternals = true;
+}
+removeDroneHotspots = () =>{
+	this.tour_params.removeDrones = true;
+}
 //tablet parameter
 setDimensions_tablet = (width: string | number, height: string | number) : void => {
 	this.setWidth_tablet(width);
@@ -357,14 +369,15 @@ setMovementDelay = (delay : number) => {
 setMovementLoopAmount = (loop_amount: number) => {
 	this.movement_params.loop_amount = loop_amount
 }
-addKeyframe = (fov:number,tilt:number,pan:number,speed: number,lock_controls: ControlsLock, node: number) => {
+addKeyframe = (fov:number,tilt:number,pan:number,speed: number,locked_controls: ControlsLock, node: number, pause = 0) => {
 	var keyframeParams: MoveKeyframe = {
-		fov : fov,
-		tilt : tilt,
-		pan : pan,
-		speed : speed,
-		locked_controls : lock_controls,
-		node : node
+		fov,
+		tilt,
+		pan,
+		speed,
+		locked_controls,
+		node,
+		pause
 	}
 	let valid = this.checkKeyframeParams(keyframeParams);
 	if(!valid){
@@ -539,9 +552,9 @@ setup_pano = async() => {
 		default:
 			singleImage = this.addons_params.singleImage;
 	}
-	this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{this.onPanoConfigRead(singleImage)} ,this.tour_params.basepath)
-this.callAfterPanoLoaded(this.loadKeyframes);
-this.callAfterPanoLoaded(this.addHotspotListeners);
+	await this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{this.onPanoConfigRead(singleImage)} ,this.tour_params.basepath)
+	this.loadKeyframes();
+	this.addHotspotListeners();
 }
 pano_UpdateViewingParams = () => {
 	if(this.tour_params.fov || this.tour_params.fov === 0){
@@ -553,6 +566,18 @@ pano_UpdateViewingParams = () => {
 	if(this.tour_params.pan || this.tour_params.pan === 0){
 		this.pano.setPan(this.tour_params.pan)
 	}
+}
+moveHome = async()=>{
+	let homeKeyframe: MoveKeyframe = {
+		node: this.tour_params.node || 1,
+		fov: this.tour_params.fov || 75,
+		tilt: this.tour_params.tilt || 0,
+		pan: this.tour_params.pan || 0,
+		locked_controls:"Mousewheel",
+		speed:1,
+		pause:0
+	}
+	await this.moveToKeyframe(homeKeyframe);
 }
 loadKeyframes = async() => {
 	setTimeout(async() => {
@@ -571,6 +596,7 @@ loadKeyframes = async() => {
 				for(let i = 0; i< this.movement_params.loop_amount;i++){
 					if(this.movement_params.movementAborted === false){
 						await this.moveToKeyframes();
+						await this.moveHome();
 					}else{
 						break;
 					}
@@ -579,7 +605,7 @@ loadKeyframes = async() => {
 			}
 	
 	},this.movement_params.delay);
-}
+}/*
 moveToStartNode = () : Promise<void> => {
 	return new Promise((resolve, reject) => {
 		if(!this.elements.panoContainer){
@@ -600,44 +626,59 @@ moveToStartNode = () : Promise<void> => {
 			reject("start node not set");
 		}
 	})
+}*/
+sleep = (milliseconds:number) =>{
+	return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
  moveToKeyframes = async() => {
 		try{
-			const promises = this.movement_params.keyframes.map(async(keyframe) =>{
+			return await Promise.allSettled(this.movement_params.keyframes.map(async(keyframe) =>{
 			const frame = await this.moveToKeyframe(keyframe);
 			return frame;
-		})
-		const frames = await Promise.all(promises);
-		return frames;
-	
+		}))
 	}catch(err){
 		console.log(err)
 		return null;
 	}
 }
-moveToKeyframe = (keyframe : MoveKeyframe) : Promise<void> => {
-	return new Promise(async (resolve,reject) => {
-		try{
-			if(this.movement_params.movementAborted === false){
-				await this.checkActiveMovement();
-				this.setLock(keyframe.locked_controls)
-				if(this.movement_params.keyframes[0] == keyframe){
-					await this.moveToStartNode()
-				}
-				if(keyframe.node && "node"+keyframe.node !== this.pano.getCurrentNode()){
-					await this.pano.openNext("{node"+keyframe.node+"}")
-				}
-				await this.pano.moveTo(keyframe.pan, keyframe.tilt, keyframe.fov,keyframe.speed,0,1);
-				this.removeLockAfterMovement(keyframe.locked_controls);
-				if(keyframe.node && !this.pano.getNodeIds().includes("node"+keyframe.node)){
-					reject("movement aborted")
-					console.log("Aborted Movement! There is no node"+keyframe.node+" in this tour.")
-				}else{
-					resolve()
-				}
+runMovement = (keyframe:MoveKeyframe) =>{
+	return new Promise<void>((resolve, reject) =>{
+		this.pano.moveTo(keyframe.pan, keyframe.tilt, keyframe.fov,keyframe.speed,0,1);
+		let moveInterval = setInterval(async()=>{
+			if(this.pano.getPan().toFixed(2) === keyframe.pan.toFixed(2) && this.pano.getFov().toFixed(2) === keyframe.fov.toFixed(2) && keyframe.tilt.toFixed(2) === keyframe.tilt.toFixed(2)){
+				clearInterval(moveInterval);
+				await this.sleep(keyframe.pause)
+				resolve();
 			}
-		}catch(err){throw new Error(err as string)}
+		},50);
 	})
+}
+moveToKeyframe = (keyframe : MoveKeyframe) : Promise<void> => {
+		try{
+			return new Promise<void>(async(resolve, reject) =>{
+				if(this.movement_params.movementAborted === false){
+					await this.checkActiveMovement();
+					this.setLock(keyframe.locked_controls)
+					if(keyframe.node && "node"+keyframe.node !== this.pano.getCurrentNode()){
+						await this.pano.openNext("{node"+keyframe.node+"}")
+					}
+					await this.runMovement(keyframe);
+					
+					console.log("waiting")
+					let time = 0;
+					setInterval(()=>time++,1)
+					setTimeout(()=>{
+						this.removeLockAfterMovement(keyframe.locked_controls);
+						if(keyframe.node && !this.pano.getNodeIds().includes("node"+keyframe.node)){
+							reject("Aborted Movement! There is no node"+keyframe.node+" in this tour.")
+						}
+						console.log("waited ",time)
+						resolve();
+					},keyframe.pause)
+				}
+			})
+			
+		}catch(err){throw new Error(err as string)}
 }
 checkActiveMovement = () : Promise<void> => {
 	return new Promise(async(resolve,reject) => {
@@ -806,31 +847,27 @@ for (var prop in this.tour_params){
     }
 }
 
-addHotspotListeners = () => {
-	if(!this.elements.panoContainer){
-		console.warn("can't add hotspot listeners, if no panoContainer is declared")
-	}else{
-		var hotspots = this.elements.panoContainer.getElementsByClassName("ggskin_hotspot");
-		for(let i = 0; i<hotspots.length;i++){
-		hotspots[i].addEventListener("mouseover",() => {
-		var timesCalled = 0;
-		var hn_interval = setInterval(() => {
-			if(timesCalled < 25){
-			if(this.pano && this.pano.hotspot){
-				var hotspot = this.pano.hotspot;
-			}
-			if(hotspot.url != ""){
-				this.hovered_node = hotspot;
-				clearInterval(hn_interval);
-			}else{
-				timesCalled++
-			}
-			}else{
-				clearInterval(hn_interval);
-			}
-		},10);
-		});
-		
+setExternalsToTourChange = () =>{
+	var hotspots = this.elements.panoContainer!.getElementsByClassName("ggskin_hotspot");
+	for(let i = 0; i<hotspots.length;i++){
+	hotspots[i].addEventListener("mouseover",() => {
+	var timesCalled = 0;
+	var hn_interval = setInterval(() => {
+		if(timesCalled < 25){
+		if(this.pano && this.pano.hotspot){
+			var hotspot = this.pano.hotspot;
+		}
+		if(hotspot.url != ""){
+			this.hovered_node = hotspot;
+			clearInterval(hn_interval);
+		}else{
+			timesCalled++
+		}
+		}else{
+			clearInterval(hn_interval);
+		}
+	},10);
+	});
 	hotspots[i].addEventListener("mouseup",() => {
 		if(this.hovered_node!.url.includes("http")){
 		var hotspotURL = this.hovered_node!.url;
@@ -845,17 +882,79 @@ addHotspotListeners = () => {
 		this.setFov(this.pano.getFov());
 		this.setPan(this.pano.getPan());
 		this.setTilt(this.pano.getTilt());
-        this.reload();
-        this.externalHotspotListenerSet = false;
+		this.reload();
+		this.externalHotspotListenerSet = false;
 	}
 	});
-    }
-    if(this.externalHotspotListenerSet == false){
-        this.externalHotspotListenerSet = true;
-        this.pano.addListener("changenode",() => {
-            this.addHotspotListeners();
-        });
-    }
+	}
+	if(this.externalHotspotListenerSet == false){
+		this.externalHotspotListenerSet = true;
+		this.pano.addListener("changenode",() => {
+			this.addHotspotListeners();
+		});
+	}
+}
+
+getCurrentHotspots = async() =>{
+	await this.waitForPanoLoad();
+	return this.pano.getPointHotspotIds().map(id => this.pano.getHotspot(id));
+}
+
+getHotspotsByFilters = (hotspots ,filters = this.tour_params.nodeFilter) =>{
+	return filters.map((filter)=>{
+		let filterTitle = filter.caseSensitive ? filter.filter : filter.filter.toLowerCase();
+		return hotspots.filter((hs) => {
+			let hsTitle = filter.caseSensitive ? hs.title : hs.title.toLowerCase();
+			return hsTitle.includes(filterTitle);
+		})
+	}).flat(2)
+}
+
+removeHotspotsByFilters = (filters = this.tour_params.nodeFilter) =>{
+	this.getCurrentHotspots().then((hotspots)=>{
+		let hsToShow = this.getHotspotsByFilters(hotspots, filters);
+		console.log(hsToShow[0],hotspots)
+		hotspots.forEach((currHs)=>{
+			if (hsToShow.findIndex(hs => hs.id === currHs.id  && hs.title === currHs.title) < 0){
+				currHs.div.remove();
+				console.log("remove hotspot",currHs.id,currHs.title)
+				console.log(filters.map((filter) => filter.filter))
+			}
+		})
+	})
+	
+}
+
+removeExternals = () =>{
+	this.getCurrentHotspots().then((hotspots)=> hotspots.forEach((hs)=>{
+		if(hs.url.startsWith("http"))
+		hs.div.remove();
+	}))	
+}
+
+removeDrones = () => {
+	this.getCurrentHotspots().then((hotspots) => hotspots.forEach((hs)=>{
+		if(hs.skinid.toLowerCase().includes("drone") || hs.skinid.toLowerCase().includes("drohne")){
+			hs.div.remove();
+		}
+	}))
+}
+
+addHotspotListeners = () => {
+	if(!this.elements.panoContainer){
+		console.warn("can't add hotspot listeners, if no panoContainer is declared")
+	}else{
+		if(!this.pano || !this.pano.getPointHotspotIds){
+			console.warn("can't add hotspot listeners as pano isn't ready yet")
+		}else{
+			if(this.tour_params.removeExternals){
+				this.removeExternals()
+			}else{
+				this.setExternalsToTourChange();
+			}
+			if(this.tour_params.removeDrones) this.removeDrones();
+			this.removeHotspotsByFilters();
+		}
 	}
 	
 }

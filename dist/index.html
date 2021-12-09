@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tourbuilder Test</title>
     <link rel = "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-  <script type="module" crossorigin src="/assets/index.a7736054.js"></script>
+  <script type="module" crossorigin src="/assets/index.90ce83cf.js"></script>
     <link rel="stylesheet" href="/assets/index.1f71d4c9.css">
   </head>
 <body>
@@ -16,12 +16,11 @@
         let interval = setInterval(()=>{
             if(window["Pano_360ty"]){
                 clearInterval(interval)
-                var tour_360ty = new Pano_360ty("360ty_container","https://lechsommer.360ty.cloud/");
-                tour_360ty.setPanoConfigFile("https://lechsommer.360ty.cloud/pano.xml");
+                var tour_360ty = new Pano_360ty("360ty_container","https://rufanalodge.360ty.cloud/");
                 tour_360ty.setDimensions("100%","21:9");
                 tour_360ty.setHorizontalAlignment("center");
-                tour_360ty.setStartNode(112);
-                tour_360ty.setViewingParameter("65",0.05,"10.7");
+                tour_360ty.setStartNode(1);
+                tour_360ty.setViewingParameter(65,0.05,10.7);
                 tour_360ty.setSingleImage(false);
                 tour_360ty.setShareButtonVisibility(true);
                 tour_360ty.setImpressumVisibility(false);
@@ -37,8 +36,10 @@
                 tour_360ty.setImpressumVisibility_mobile(false);
                 tour_360ty.setBackgroundColor("#000000","#FFFFFF")
                 tour_360ty.setSkinVariables([{website:"https://website.com"},{buchungslink:"test"}])
-                //tour_360ty.addKeyframe(50,0,25,1,"Mousewheel", 25);
-                //tour_360ty.addKeyframe(50,0,25,1,"Mousewheel", 26);
+                tour_360ty.addKeyframe(70,-2.49,-20.15,0.05,"Mousewheel",12);
+                tour_360ty.addKeyframe(70,4.61,121.56,0.05,"Mousewheel",10);
+                tour_360ty.addKeyframe(70,-3.73,-58.93,0.05,"Mousewheel",6);
+
                 tour_360ty.setMovementLoopAmount(10);
                 tour_360ty.onMovementAborted = ()=>{console.log("movement aborted")}
                 tour_360ty.onMovementFinished = ()=>{console.log("movement finished")}

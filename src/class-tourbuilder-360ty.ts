@@ -916,7 +916,7 @@ removeHotspotsByFilters = (filters = this.tour_params.nodeFilter) =>{
 		console.log(hsToShow[0],hotspots)
 		hotspots.forEach((currHs)=>{
 			if (hsToShow.findIndex(hs => hs.id === currHs.id  && hs.title === currHs.title) < 0){
-				currHs.div.remove();
+				this.pano.removeHotspot(currHs.id);
 				console.log("remove hotspot",currHs.id,currHs.title)
 				console.log(filters.map((filter) => filter.filter))
 			}
@@ -928,14 +928,14 @@ removeHotspotsByFilters = (filters = this.tour_params.nodeFilter) =>{
 removeExternals = () =>{
 	this.getCurrentHotspots().then((hotspots)=> hotspots.forEach((hs)=>{
 		if(hs.url.startsWith("http"))
-		hs.div.remove();
+		this.pano.removeHotspot(hs.id);
 	}))	
 }
 
 removeDrones = () => {
 	this.getCurrentHotspots().then((hotspots) => hotspots.forEach((hs)=>{
 		if(hs.skinid.toLowerCase().includes("drone") || hs.skinid.toLowerCase().includes("drohne")){
-			hs.div.remove();
+			this.pano.removeHotspot(hs.id);
 		}
 	}))
 }
@@ -953,7 +953,7 @@ addHotspotListeners = () => {
 				this.setExternalsToTourChange();
 			}
 			if(this.tour_params.removeDrones) this.removeDrones();
-			this.removeHotspotsByFilters();
+			if(this.tour_params.nodeFilter.length > 0) this.removeHotspotsByFilters();
 		}
 	}
 	

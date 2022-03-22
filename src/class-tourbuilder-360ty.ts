@@ -43,6 +43,7 @@ export default class Pano_360ty{
 	};
 	tour_params: TourParams = {
 		basepath : "",
+		confFile: "",
 		nodeFilter: [],
 		removeExternals: false,
 		removeDrones: false,
@@ -102,9 +103,10 @@ export default class Pano_360ty{
 
 	private externalHotspotListenerSet: boolean = false;
 
-	constructor(parentContainerID:string,basepath:string, suffix?:string){
-		this.suffix = suffix || "instance";
+	constructor(parentContainerID:string,basepath:string, suffix?:string,confFile?:string){
+		this.suffix = suffix || "";
 		this.tour_params.basepath = basepath;
+		if(confFile)this.tour_params.confFile = confFile;
 		this.elementIDs.parentContainer = parentContainerID;
 	}
 	deviceType = () : DeviceType=>{
@@ -147,13 +149,10 @@ export default class Pano_360ty{
  	init = async(): Promise<void> => {
 	return new Promise(async(resolve,reject)=>{
 		try{
-			if(!document.getElementById(this.elementIDs.container)){
+			await this.waitForParentContainer();
+			this.renameElementIds();
+			if(!this.elements.parentContainer!.querySelector("#"+this.elementIDs.container)){
 				let viewportMetaSet = false;
-				document.head.querySelectorAll("meta").forEach(function(meta: HTMLMetaElement){
-					if(meta.name === "viewport"){
-						viewportMetaSet = true;
-					}
-				}.bind(this));
 				if(viewportMetaSet === false){
 					this.addMeta("viewport","width=device-width, initial-scale=1");
 				}
@@ -193,7 +192,6 @@ export default class Pano_360ty{
 						horAlign = this.style_params.horizontal_alignment;
 						break;
 				}
-				await this.waitForParentContainer();
 				this.declareElements();
 				this.setURLParameter();
 				await this.setup_pano();
@@ -222,11 +220,31 @@ export default class Pano_360ty{
 	return new Promise((resolve)=>{
 		let init_interval = setInterval(()=>{
 			if(document.getElementById(this.elementIDs.parentContainer)){
+				this.elements.parentContainer = document.getElementById(this.elementIDs.parentContainer);
 				clearInterval(init_interval);
 				resolve();
 			}
 		},50);
 	})
+}
+private renameElementIds = () =>{
+	if(!this.suffix || this.suffix === ""){
+		this.suffix = Math.random().toString(36).substring(2,7)
+	}
+	this.elementIDs = {
+		...this.elementIDs,
+		container : "tourbuilder_360ty_"+this.suffix,
+		panoContainer : "pano_container_360ty_"+this.suffix,
+		impressumContainer : "impressum_360ty_"+this.suffix,
+		buttonContainer : "button_container_360ty_"+this.suffix,
+		shareButton : "shareButton_360ty_"+this.suffix,
+		FBshareButton : "FBshareButton_360ty_"+this.suffix,
+		URLshareButton : "URLshareButton_360ty_"+this.suffix,
+		slidesButton : "slidesButton_360ty_"+this.suffix,
+		buttonContainer_value_setter : "buttonContainer_value_setter_360ty_"+this.suffix,
+		targetValueSetter_button : "setTargetValue_360ty_"+this.suffix,
+		startValueSetter_button : "setStartValues_360ty_"+this.suffix,
+	};
 }
 //user inputs
 setBasePath = (url:string) =>{
@@ -424,9 +442,11 @@ reload = () => {
         }
 		this.elements.impressumContainer = null;
 	}
-	this.init();
-    this.onReload();
-    this.callAfterReload();
+	this.onReload();
+	this.init().then(()=>{
+		this.callAfterReload();
+	});
+    
 }
 checkKeyframeParams = (keyframeParams: MoveKeyframe) : boolean => {
 	if(typeof(keyframeParams.fov) === "number" && typeof(keyframeParams.tilt) === "number" && typeof(keyframeParams.pan) === "number" &&
@@ -464,7 +484,6 @@ includeStyle = () => {
 }
 
 declareElements = () => {
-	this.elements.parentContainer = document.getElementById(this.elementIDs.parentContainer);
 
 	if(this.responsive_params.tablet.tour_dimensions.width === null){
 		this.responsive_params.tablet.tour_dimensions.width = this.style_params.tour_dimensions.width
@@ -529,7 +548,7 @@ setup_pano = async() => {
 	if(!this.elements.panoContainer){
 		this.createContainer();
 	}
-	this.pano=new pano2vrPlayer(this.elementIDs.panoContainer);
+	this.pano=new pano2vrPlayer(this.elementIDs.panoContainer,this.tour_params.basepath);
 	if(this.tour_params.node){
 		this.pano.startNode = "node"+this.tour_params.node;
 	}
@@ -869,7 +888,7 @@ setExternalsToTourChange = () =>{
 	},10);
 	});
 	hotspots[i].addEventListener("mouseup",() => {
-		if(this.hovered_node!.url.includes("http")){
+		if(this.hovered_node!.url.startsWith("http") && this.hovered_node!.url.includes(".360ty.")){
 		var hotspotURL = this.hovered_node!.url;
 		var basePathStartIndex = hotspotURL.indexOf("//")+2;
 		var basePathEndIndex = hotspotURL.indexOf("/",basePathStartIndex);

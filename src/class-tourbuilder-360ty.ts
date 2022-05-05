@@ -1,6 +1,7 @@
 /*import * as pano2vrPlayer from './pano2vr_player.js';
 import pano2vrSkin from './skin_module.js';*/
-import pano2vrPlayer from "./pano2vr_player.js";
+import ScrollLock from "./modules/ScrollLock.js";
+import pano2vrPlayer from "./pano2vr_player_v7.js";
 import pano2vrSkin from "./skin_module.js";
 import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
 
@@ -98,8 +99,11 @@ export default class Pano_360ty{
 	hovered_node: TourNode | null = null;
 	pano:typeof pano2vrPlayer = null;
 	skin:typeof pano2vrSkin = null;
-	skinClass = pano2vrSkin;
+	p2vrPlayer: typeof pano2vrPlayer = window.pano2vrPlayer || pano2vrPlayer;
+	skinClass: typeof pano2vrSkin = window.pano2vrSkin || pano2vrSkin;
 	controlsListener:ControlsListener = {};
+	scrollLock:boolean = false;
+	scrollLockHandler: ScrollLock | undefined;
 
 	private externalHotspotListenerSet: boolean = false;
 
@@ -118,6 +122,7 @@ export default class Pano_360ty{
 				return "desktop";
 		}
 	};
+	isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints;
 	name = () => {
 		let instanceName = "";
 			for (var name in window){
@@ -127,7 +132,9 @@ export default class Pano_360ty{
 			}
 		return instanceName;
 };
-
+	setPano2VRPlayer = (player: typeof pano2vrPlayer) => {
+		this.p2vrPlayer = player;
+	}
 	getWebGLcontexts = () => {
 		var contexts:WebGLRenderingContext[] = [];
 		if(!this.elements.panoContainer){
@@ -208,6 +215,7 @@ export default class Pano_360ty{
 					this.horizontallyAlignImage(horAlign);
 				}
 				this.addListeners();
+				this.scrollLockHandler = new ScrollLock(this,this.scrollLock);
 				resolve();						
 			}
 		}catch(err){
@@ -387,6 +395,12 @@ setMovementDelay = (delay : number) => {
 setMovementLoopAmount = (loop_amount: number) => {
 	this.movement_params.loop_amount = loop_amount
 }
+setScrollLock = (lock: boolean) => {
+	this.scrollLock = lock;
+	if(this.scrollLockHandler){
+		this.scrollLockHandler.setScrollLock(lock);
+	}
+}
 addKeyframe = (fov:number,tilt:number,pan:number,speed: number,locked_controls: ControlsLock, node: number, pause = 0) => {
 	var keyframeParams: MoveKeyframe = {
 		fov,
@@ -533,6 +547,9 @@ addMeta = (metaName: string, metaContent: string) => {
 //setup_pano
 
 onPanoConfigRead = (singleImage: boolean) => {
+	if(this.pano.setZoomCenterCursor){
+		this.pano.setZoomCenterCursor(0);
+	}
 	if(singleImage === true){
 		this.pano.removeHotspots();
 		this.pano.stopAutorotate();
@@ -548,7 +565,7 @@ setup_pano = async() => {
 	if(!this.elements.panoContainer){
 		this.createContainer();
 	}
-	this.pano=new pano2vrPlayer(this.elementIDs.panoContainer,this.tour_params.basepath);
+	this.pano=new this.p2vrPlayer(this.elementIDs.panoContainer,this.tour_params.basepath);
 	if(this.tour_params.node){
 		this.pano.startNode = "node"+this.tour_params.node;
 	}
@@ -571,7 +588,9 @@ setup_pano = async() => {
 		default:
 			singleImage = this.addons_params.singleImage;
 	}
-	await this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{this.onPanoConfigRead(singleImage)} ,this.tour_params.basepath)
+	await this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{
+		this.onPanoConfigRead(singleImage)} 
+	,this.tour_params.basepath)
 	this.loadKeyframes();
 	this.addHotspotListeners();
 }

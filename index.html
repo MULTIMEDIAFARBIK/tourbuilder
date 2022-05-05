@@ -6,17 +6,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tourbuilder Test</title>
     <link rel = "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+    <script src="https://api.360ty.cloud/pano2vr_player.js"></script> 
+    <script type="module" src="/src/main.ts"></script>
+    <script src="https://bregenzsommer.360ty.cloud/skin.js"></script>
 </head>
 <body>
-    <script type="module" src="/src/main.ts"></script>
-    <div id="360ty_container" style="height:50vh;width:100%"></div>
-    <div id="360ty_container_2" style="height:50vh;width:100%"></div>
-
+    <div>
+        <p style="padding-bottom: 40vh;">test</p>
+    </div>
+    <div id="360ty_container" style="height:50vh;width:80%"></div>
+    <div>
+        <p style="padding-bottom: 40vh;">test</p>
+    </div>
     <script>
         let interval = setInterval(()=>{
             if(window["Pano_360ty"]){
                 clearInterval(interval)
-                var tour_360ty = new Pano_360ty("360ty_container","https://bregenzsommer.360ty.cloud/",undefined,"https://bregenzsommer.360ty.cloud/ostern.xml");
+                
+			var tour_360ty = new Pano_360ty("360ty_container","https://bregenzsommer.360ty.cloud/");
+			tour_360ty.setDimensions("100%","100%");
+			tour_360ty.setHorizontalAlignment("center");
+			tour_360ty.setStartNode(15);
+			tour_360ty.setViewingParameter(52.10,-9.23,1.40);
+			tour_360ty.setSingleImage(false);
+			tour_360ty.setShareButtonVisibility(false);
+			tour_360ty.setImpressumVisibility(false);
+			tour_360ty.setDimensions_tablet("100%","16:9");
+			tour_360ty.setHorizontalAlignment_tablet("center");
+			tour_360ty.setSingleImage_tablet(false);
+			tour_360ty.setShareButtonVisibility_tablet(false);
+			tour_360ty.setImpressumVisibility_tablet(false);
+			tour_360ty.setDimensions_mobile("100%","16:9");
+			tour_360ty.setHorizontalAlignment_mobile("center");
+			tour_360ty.setSingleImage_mobile(false);
+			tour_360ty.setShareButtonVisibility_mobile(false);
+			tour_360ty.setImpressumVisibility_mobile(false);
+            tour_360ty.setScrollLock(true);
+			tour_360ty.init()
+            window.tour_360ty = tour_360ty;
+    }
+
+},50)
+       /* let interval = setInterval(()=>{
+            if(window["Pano_360ty"]){
+                clearInterval(interval)
+                var tour_360ty = new Pano_360ty("360ty_container","https://imperialchurch.360ty.cloud/");
                 tour_360ty.setDimensions("100%","100%");
                 tour_360ty.setHorizontalAlignment("center");
                 tour_360ty.setStartNode(33);
@@ -64,7 +98,7 @@
         }
 
         })
-       
+       */
     </script>
     
 </body>

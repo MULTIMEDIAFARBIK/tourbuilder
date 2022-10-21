@@ -1,6 +1,6 @@
 {
-  "name": "library",
-  "version": "0.0.0",
+  "name": "tourbuilder-library",
+  "version": "1.1.2",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

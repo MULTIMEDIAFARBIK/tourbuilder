@@ -1,6 +1,6 @@
 /*import * as pano2vrPlayer from './pano2vr_player.js';
 import pano2vrSkin from './skin_module.js';*/
-import ScrollLock from "./modules/ScrollLock.js";
+import ScrollLock from "./modules/ScrollLock";
 import pano2vrPlayer from "./pano2vr_player_v7.js";
 import pano2vrSkin from "./skin_module.js";
 import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
@@ -98,7 +98,7 @@ export default class Pano_360ty{
 	skin_variables: SkinVariable[] = [];
 	hovered_node: TourNode | null = null;
 	pano:typeof pano2vrPlayer = null;
-	skin:typeof pano2vrSkin = null;
+	skin:typeof pano2vrSkin | null = null;
 	p2vrPlayer: typeof pano2vrPlayer = window.pano2vrPlayer || pano2vrPlayer;
 	skinClass: typeof pano2vrSkin = window.pano2vrSkin || pano2vrSkin;
 	controlsListener:ControlsListener = {};
@@ -109,14 +109,14 @@ export default class Pano_360ty{
 
 	constructor(parentContainerID:string,basepath:string, suffix?:string,confFile?:string){
 		this.suffix = suffix || "";
-		this.tour_params.basepath = basepath;
+		this.setBasePath(basepath);
 		if(confFile)this.tour_params.confFile = confFile;
 		this.elementIDs.parentContainer = parentContainerID;
 	}
 	deviceType = () : DeviceType=>{
-			if(window.matchMedia("only screen and (max-width: 400px)").matches == true){
+			if(window.matchMedia("only screen and (max-width: 900px)").matches == true){
 				return "mobile";
-			}else if(window.matchMedia("only screen and (max-width: 800px)").matches == true){
+			}else if(window.matchMedia("only screen and (max-width: 1300px)").matches == true){
 				return "tablet";
 			}else{
 				return "desktop";
@@ -153,6 +153,15 @@ export default class Pano_360ty{
 					return false;
 				}
 			};
+	parseDomain = (domain: string) =>{
+		domain = domain.replace(/(?:http(?:s?):\/{2})?([\w-?]*\.\w*\.\w*\.*\w*)(?:\S*\s*)/gi,"$1")
+		return domain;
+	}
+	parseBasepath = (basepath: string) =>{
+		basepath = this.parseDomain(basepath)
+		if(basepath.endsWith("/")) basepath = basepath.substring(0, basepath.length - 1)
+		return "https://" + basepath + "/"
+	}
  	init = async(): Promise<void> => {
 	return new Promise(async(resolve,reject)=>{
 		try{
@@ -256,17 +265,8 @@ private renameElementIds = () =>{
 }
 //user inputs
 setBasePath = (url:string) =>{
-	if(!url.endsWith("/")){
-		url += "/"; 
-	}
-	if(url.startsWith("http://")){
-		url = url.substring(7);
-		url = "https://" + url; 
-	}
-	if(!url.startsWith("https://")){
-		url = "https://" + url; 
-	}
-	this.tour_params.basepath = url;
+	if(!url || url === "") return
+	this.tour_params.basepath = this.parseBasepath(url)
 }
 setBackgroundImage = (url:string) => {
 	this.style_params.backgroundImage = url;
@@ -418,41 +418,45 @@ addKeyframe = (fov:number,tilt:number,pan:number,speed: number,locked_controls: 
 	this.movement_params.keyframes.push(keyframeParams);
 	
 }
+removeElement = (element: HTMLElement) => {
+	if(!element.parentElement) throw new Error(`can't remove child when there's no parent`)
+	element.parentElement.removeChild(element);
+}
 reload = () => {
 	this.externalHotspotListenerSet = false;
 	this.clearwebglContext()
     if(this.elements.container && this.elements.container.parentElement){
-        this.elements.container.parentElement.removeChild(this.elements.container);
+		this.removeElement(this.elements.container);
     }
 	this.elements.container = null;
 	this.elements.panoContainer = null;
 	if(this.elements.shareButton){
         if(this.elements.shareButton.parentElement){
-            this.elements.shareButton.parentElement.removeChild(this.elements.shareButton);
+			this.removeElement(this.elements.shareButton);
         }
 		this.elements.shareButton = null;
 	}
 	if(this.elements.FBshareButton){
         if(this.elements.FBshareButton.parentElement){
-		    this.elements.FBshareButton.parentElement.removeChild(this.elements.FBshareButton);
+			this.removeElement(this.elements.FBshareButton);
         }
 		this.elements.FBshareButton = null;
 	}
 	if(this.elements.URLshareButton){
         if(this.elements.URLshareButton.parentElement){
-            this.elements.URLshareButton.parentElement.removeChild(this.elements.URLshareButton);
+			this.removeElement(this.elements.URLshareButton);
         }
 		this.elements.URLshareButton = null;
 	}
 	if(this.elements.buttonContainer){
         if(this.elements.buttonContainer.parentElement){
-            this.elements.buttonContainer.parentElement.removeChild(this.elements.buttonContainer);
+			this.removeElement(this.elements.buttonContainer);
         }
         this.elements.buttonContainer = null;
 	}
 	if(this.elements.impressumContainer){
         if(this.elements.impressumContainer.parentElement){
-            this.elements.impressumContainer.parentElement.removeChild(this.elements.impressumContainer);
+			this.removeElement(this.elements.impressumContainer);
         }
 		this.elements.impressumContainer = null;
 	}
@@ -592,7 +596,7 @@ setup_pano = async() => {
 		this.onPanoConfigRead(singleImage)} 
 	,this.tour_params.basepath)
 	this.loadKeyframes();
-	this.addHotspotListeners();
+	this.callOnNodeChange();
 }
 pano_UpdateViewingParams = () => {
 	if(this.tour_params.fov || this.tour_params.fov === 0){
@@ -928,7 +932,7 @@ setExternalsToTourChange = () =>{
 	if(this.externalHotspotListenerSet == false){
 		this.externalHotspotListenerSet = true;
 		this.pano.addListener("changenode",() => {
-			this.addHotspotListeners();
+			this.callOnNodeChange();
 		});
 	}
 }
@@ -964,10 +968,13 @@ removeHotspotsByFilters = (filters = this.tour_params.nodeFilter) =>{
 }
 
 removeExternals = () =>{
-	this.getCurrentHotspots().then((hotspots)=> hotspots.forEach((hs)=>{
-		if(hs.url.startsWith("http"))
-		this.pano.removeHotspot(hs.id);
-	}))	
+	this.getCurrentHotspots().then((hotspots)=> {
+		hotspots.forEach((hs)=>{
+			if(hs.url.startsWith("http"))
+			this.pano.removeHotspot(hs.id);
+		});
+		this.elements.panoContainer?.querySelectorAll(".ggskin_external").forEach((el)=>el.parentElement?.parentElement?.remove())
+	})	
 }
 
 removeDrones = () => {
@@ -978,7 +985,7 @@ removeDrones = () => {
 	}))
 }
 
-addHotspotListeners = () => {
+callOnNodeChange = () => {
 	if(!this.elements.panoContainer){
 		console.warn("can't add hotspot listeners, if no panoContainer is declared")
 	}else{
@@ -1096,7 +1103,11 @@ showShareButtons = () => {
 	if(this.elements.URLshareButton) this.elements.URLshareButton.style.display = "";
 	if(this.elements.FBshareButton) this.elements.FBshareButton.style.display = "";
 }
-
+hideShareButtons = () =>{
+	if(this.elements.shareButton) this.elements.shareButton.style.display = "none";
+	if(this.elements.URLshareButton) this.elements.URLshareButton.style.display = "none";
+	if(this.elements.FBshareButton) this.elements.FBshareButton.style.display = "none";
+}
 shareOnFacebook = () => {
     var facebookURL =  "https://www.facebook.com/sharer/sharer.php?kid_directed_site=0&u=" + encodeURIComponent(this.getShareURL());
     var leftPosition = window.visualViewport?(window.visualViewport.width / 2) : (window.screen.availWidth / 2);
@@ -1131,48 +1142,44 @@ addListeners = () => {
 			this.clearwebglContext_listener();
 		}
 windowResizeListener = () => {
-	if(window.visualViewport){
-		window.visualViewport.addEventListener("resize", () => {
-			let height;
-			let width;
-			switch(this.deviceType()){
-				case "desktop":
-					width = this.style_params.tour_dimensions.width;
-					height = this.style_params.tour_dimensions.height;
-					break;
-				case "tablet":
-					width = this.responsive_params.tablet.tour_dimensions.width;
-					height = this.responsive_params.tablet.tour_dimensions.height;
-					break;
-				case "mobile":
-					width = this.responsive_params.mobile.tour_dimensions.width;
-					height = this.responsive_params.mobile.tour_dimensions.height;
-					break;
-			}
-			this.setViewerSize(width,height);
-		});
-	}else{
-		window.addEventListener("resize", () => {
-			let height;
-			let width;
-			switch(this.deviceType()){
-				case "desktop":
-					width = this.style_params.tour_dimensions.width;
-					height = this.style_params.tour_dimensions.height;
-					break;
-				case "tablet":
-					width = this.responsive_params.tablet.tour_dimensions.width;
-					height = this.responsive_params.tablet.tour_dimensions.height;
-					break;
-				case "mobile":
-					width = this.responsive_params.mobile.tour_dimensions.width;
-					height = this.responsive_params.mobile.tour_dimensions.height;
-					break;
-			}
-			this.setViewerSize(width,height);
-		});
-	}
-	
+	window.addEventListener("resize", () => {
+		let height;
+		let width;
+		switch(this.deviceType()){
+			case "desktop":
+				width = this.style_params.tour_dimensions.width;
+				height = this.style_params.tour_dimensions.height;
+				break;
+			case "tablet":
+				width = this.responsive_params.tablet.tour_dimensions.width;
+				height = this.responsive_params.tablet.tour_dimensions.height;
+				break;
+			case "mobile":
+				width = this.responsive_params.mobile.tour_dimensions.width;
+				height = this.responsive_params.mobile.tour_dimensions.height;
+				break;
+		}
+		this.setViewerSize(width,height);
+	});
+	this.elements.container?.addEventListener("resize", () => {
+		let height;
+		let width;
+		switch(this.deviceType()){
+			case "desktop":
+				width = this.style_params.tour_dimensions.width;
+				height = this.style_params.tour_dimensions.height;
+				break;
+			case "tablet":
+				width = this.responsive_params.tablet.tour_dimensions.width;
+				height = this.responsive_params.tablet.tour_dimensions.height;
+				break;
+			case "mobile":
+				width = this.responsive_params.mobile.tour_dimensions.width;
+				height = this.responsive_params.mobile.tour_dimensions.height;
+				break;
+		}
+		this.setViewerSize(width,height);
+	});
 }
 setViewerSize = (width: number | string, height: number | string) => {
 		width =  typeof width === "number" ? width + "px" : width;
@@ -1294,7 +1301,7 @@ onReload = () => {
 }
 callAfterReload = async()=>{
     await this.waitForPanoLoad();
-    this.addHotspotListeners();
+    this.callOnNodeChange();
     this.onReloadFinished()
 }
 onReloadFinished = ()=>{

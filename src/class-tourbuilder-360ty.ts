@@ -162,10 +162,21 @@ export default class Pano_360ty{
 		if(basepath.endsWith("/")) basepath = basepath.substring(0, basepath.length - 1)
 		return "https://" + basepath + "/"
 	}
+	checkBaseapathRedirect = async(basepath: string) =>{
+		try{
+			let res = await fetch(basepath,{redirect: "manual"});
+			return res.url
+
+		}catch(err)	{
+			console.error(err)
+			return basepath
+		}
+	}
  	init = async(): Promise<void> => {
 	return new Promise(async(resolve,reject)=>{
 		try{
 			await this.waitForParentContainer();
+
 			this.renameElementIds();
 			if(!this.elements.parentContainer!.querySelector("#"+this.elementIDs.container)){
 				let viewportMetaSet = false;
@@ -264,9 +275,10 @@ private renameElementIds = () =>{
 	};
 }
 //user inputs
-setBasePath = (url:string) =>{
+setBasePath = (url:string,confFile?:string) =>{
 	if(!url || url === "") return
 	this.tour_params.basepath = this.parseBasepath(url)
+	this.tour_params.confFile = confFile;
 }
 setBackgroundImage = (url:string) => {
 	this.style_params.backgroundImage = url;
@@ -566,6 +578,8 @@ onPanoConfigRead = (singleImage: boolean) => {
 }
 
 setup_pano = async() => {
+	this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath));
+
 	if(!this.elements.panoContainer){
 		this.createContainer();
 	}

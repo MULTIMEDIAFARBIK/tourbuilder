@@ -109,7 +109,7 @@ export default class Pano_360ty{
 
 	constructor(parentContainerID:string,basepath:string, suffix?:string,confFile?:string){
 		this.suffix = suffix || "";
-		this.setBasePath(basepath);
+		this.setBasePath(basepath,confFile);
 		if(confFile)this.tour_params.confFile = confFile;
 		this.elementIDs.parentContainer = parentContainerID;
 	}
@@ -578,7 +578,7 @@ onPanoConfigRead = (singleImage: boolean) => {
 }
 
 setup_pano = async() => {
-	this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath));
+	this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath),this.tour_params.confFile);
 
 	if(!this.elements.panoContainer){
 		this.createContainer();
@@ -910,23 +910,24 @@ setExternalsToTourChange = () =>{
 	var timesCalled = 0;
 	var hn_interval = setInterval(() => {
 		if(timesCalled < 25){
-		if(this.pano && this.pano.hotspot){
-			var hotspot = this.pano.hotspot;
-		}
-		if(hotspot.url != ""){
-			this.hovered_node = hotspot;
-			clearInterval(hn_interval);
-		}else{
-			timesCalled++
-		}
+			if(this.pano && this.pano.hotspot){
+				var hotspot = this.pano.hotspot;
+			}
+			if(hotspot.url){
+				this.hovered_node = hotspot;
+				clearInterval(hn_interval);
+			}else{
+				timesCalled++
+				this.hovered_node = null;
+			}
 		}else{
 			clearInterval(hn_interval);
 		}
 	},10);
 	});
 	hotspots[i].addEventListener("mouseup",() => {
-		if(this.hovered_node!.url.startsWith("http") && this.hovered_node!.url.includes(".360ty.")){
-		var hotspotURL = this.hovered_node!.url;
+		if(this.hovered_node && this.hovered_node.url.startsWith("http") && this.hovered_node!.url.includes(".360ty.")){
+		var hotspotURL = this.hovered_node.url;
 		var basePathStartIndex = hotspotURL.indexOf("//")+2;
 		var basePathEndIndex = hotspotURL.indexOf("/",basePathStartIndex);
 		var basepath = hotspotURL.substring(0,basePathEndIndex+1);

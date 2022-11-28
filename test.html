@@ -16,11 +16,10 @@
             if(window["Pano_360ty"]){
                 clearInterval(interval)
                 
-			var tour_360ty = new Pano_360ty("360ty_container","https://rudalpe.tour.360ty.world/");
-            tour_360ty.removeExternalHotspots();
+			var tour_360ty = new Pano_360ty("360ty_container","https://bregenzsommer.360ty.cloud/",undefined,"https://bregenzsommer.360ty.cloud/ostern.xml");
 			tour_360ty.setDimensions("100%","100%");
 			tour_360ty.setHorizontalAlignment("center");
-			tour_360ty.setStartNode(54);
+			tour_360ty.setStartNode(15);
 			tour_360ty.setViewingParameter(52.10,-9.23,1.40);
 			tour_360ty.setSingleImage(false);
 			tour_360ty.setShareButtonVisibility(false);
@@ -35,8 +34,33 @@
 			tour_360ty.setSingleImage_mobile(false);
 			tour_360ty.setShareButtonVisibility_mobile(false);
 			tour_360ty.setImpressumVisibility_mobile(false);
-            tour_360ty.setScrollLock(true);
-			tour_360ty.init()
+            tour_360ty.setScrollLock(false);
+			function showOsterHotspots(){
+				tour_360ty.pano.getCurrentPointHotspots().forEach(function(hs_div){
+					let imgEls = hs_div.querySelectorAll(".ggskin_svg")
+					if(imgEls.length > 0){
+						let isOsternest = false;
+						for(let j = 0; j < imgEls.length;j++){
+							let images = imgEls[j].querySelectorAll("img");
+							if(images[0] && images[0].src.startsWith("https://bregenzsommer.360ty.cloud/images")){
+								isOsternest = true;
+								imgEls[j].style.visibility = "visible";
+								imgEls[j].onclick = function(e){e.preventDefault(); e.target.style.display = "none"}
+								imgEls[j].onmouseup = function(e){e.preventDefault(); e.target.style.display = "none"}
+							}
+						}
+						if(isOsternest){
+							hs_div.onclick = function(e){e.preventDefault(); e.target.style.display = "none"}
+							hs_div.onmouseup = function(e){e.preventDefault(); e.target.style.display = "none"}
+							hs_div.style.visibility = "visible";
+						}
+					}
+				})
+			}
+			tour_360ty.init().then(function() {
+				showOsterHotspots();
+				tour_360ty.pano.addListener("changenode",showOsterHotspots);
+			});
             window.tour_360ty = tour_360ty;
     }
 

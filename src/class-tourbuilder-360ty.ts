@@ -926,7 +926,7 @@ setExternalsToTourChange = () =>{
 	},10);
 	});
 	hotspots[i].addEventListener("mouseup",() => {
-		if(this.hovered_node && this.hovered_node.url.startsWith("http") && this.hovered_node!.url.includes(".360ty.")){
+		if(this.hovered_node && this.hovered_node.url.startsWith("http") && this.hovered_node!.url.includes(".360ty.") && this.hovered_node!.target==="_self"){
 		var hotspotURL = this.hovered_node.url;
 		var basePathStartIndex = hotspotURL.indexOf("//")+2;
 		var basePathEndIndex = hotspotURL.indexOf("/",basePathStartIndex);
@@ -1317,7 +1317,7 @@ onReload = () => {
 callAfterReload = async()=>{
     await this.waitForPanoLoad();
     this.callOnNodeChange();
-    this.onReloadFinished()
+    this.onReloadFinished();
 }
 onReloadFinished = ()=>{
 

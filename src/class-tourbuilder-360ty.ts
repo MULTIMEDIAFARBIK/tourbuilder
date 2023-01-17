@@ -577,40 +577,50 @@ onPanoConfigRead = (singleImage: boolean) => {
 
 }
 
-setup_pano = async() => {
-	this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath),this.tour_params.confFile);
+setup_pano = () => {
+	return new Promise(async(resolve,reject)=>{
+		this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath),this.tour_params.confFile);
 
-	if(!this.elements.panoContainer){
-		this.createContainer();
-	}
-	this.pano=new this.p2vrPlayer(this.elementIDs.panoContainer,this.tour_params.basepath);
-	if(this.tour_params.node){
-		this.pano.startNode = "node"+this.tour_params.node;
-	}
-	if(typeof(this.skinClass) !== "function"){
-		this.skinClass = await this.getSkinClass(this.skinClass);
-	}
-
-	this.skin=new this.skinClass(this.pano,this.tour_params.basepath);
-	var singleImage = false;
-	switch(this.deviceType()){
-		case 'desktop':
-			singleImage = this.addons_params.singleImage;
-			break;
-		case 'tablet':
-			singleImage = this.responsive_params.tablet.singleImage;
-			break;
-		case 'mobile':
-			singleImage = this.responsive_params.mobile.singleImage;
-			break;
-		default:
-			singleImage = this.addons_params.singleImage;
-	}
-	await this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{
-		this.onPanoConfigRead(singleImage)} 
-	,this.tour_params.basepath)
-	this.loadKeyframes();
-	this.callOnNodeChange();
+		if(!this.elements.panoContainer){
+			this.createContainer();
+		}
+		this.pano=new this.p2vrPlayer(this.elementIDs.panoContainer,this.tour_params.basepath);
+		if(this.tour_params.node){
+			this.pano.startNode = "node"+this.tour_params.node;
+		}
+		if(typeof(this.skinClass) !== "function"){
+			this.skinClass = await this.getSkinClass(this.skinClass);
+		}
+	
+		this.skin=new this.skinClass(this.pano,this.tour_params.basepath);
+		var singleImage = false;
+		switch(this.deviceType()){
+			case 'desktop':
+				singleImage = this.addons_params.singleImage;
+				break;
+			case 'tablet':
+				singleImage = this.responsive_params.tablet.singleImage;
+				break;
+			case 'mobile':
+				singleImage = this.responsive_params.mobile.singleImage;
+				break;
+			default:
+				singleImage = this.addons_params.singleImage;
+		}
+		try{
+			this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{
+				this.onPanoConfigRead(singleImage)
+				this.loadKeyframes();
+				this.callOnNodeChange();
+				resolve(this.pano);
+			}
+			,this.tour_params.basepath)
+		}catch(err){
+			reject(err);
+		}
+	
+	})
+	
 }
 pano_UpdateViewingParams = () => {
 	if(this.tour_params.fov || this.tour_params.fov === 0){
@@ -974,21 +984,20 @@ removeHotspotsByFilters = (filters = this.tour_params.nodeFilter) =>{
 		hotspots.forEach((currHs)=>{
 			if (hsToShow.findIndex(hs => hs.id === currHs.id  && hs.title === currHs.title) < 0){
 				this.pano.removeHotspot(currHs.id);
-				console.log("remove hotspot",currHs.id,currHs.title)
-				console.log(filters.map((filter) => filter.filter))
+				//console.log("removed hotspot",currHs.id,currHs.title)
+				//console.log(filters.map((filter) => filter.filter))
 			}
 		})
 	})
 	
 }
 
-removeExternals = () =>{
+removeExternals = (selfOnly:boolean = true) =>{
 	this.getCurrentHotspots().then((hotspots)=> {
 		hotspots.forEach((hs)=>{
-			if(hs.url.startsWith("http"))
+			if(hs.url.startsWith("http") && (!selfOnly || hs.target === "_self"))
 			this.pano.removeHotspot(hs.id);
 		});
-		this.elements.panoContainer?.querySelectorAll(".ggskin_external").forEach((el)=>el.parentElement?.parentElement?.remove())
 	})	
 }
 

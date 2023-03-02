@@ -22,6 +22,7 @@ export default class Pano_360ty{
 		buttonContainer_value_setter : "buttonContainer_value_setter_360ty_"+this.suffix,
 		targetValueSetter_button : "setTargetValue_360ty_"+this.suffix,
 		startValueSetter_button : "setStartValues_360ty_"+this.suffix,
+		fullscreenClose_button : "fullscreenClose_360ty_"+this.suffix,
 	};
 	elementClasses: ElementClasses = {
 		class_shareButtons : "shareButton_360ty_"+this.suffix,
@@ -40,6 +41,7 @@ export default class Pano_360ty{
 		buttonContainer_value_setter : null,
 		targetValueSetter_button : null,
 		startValueSetter_button : null,
+		fullscreenClose_button : null,
 		slidesButton : null,
 	};
 	tour_params: TourParams = {
@@ -104,7 +106,7 @@ export default class Pano_360ty{
 	controlsListener:ControlsListener = {};
 	scrollLock:boolean = false;
 	scrollLockHandler: ScrollLock | undefined;
-
+	forceStylesheet: boolean = false;
 	private externalHotspotListenerSet: boolean = false;
 
 	constructor(parentContainerID:string,basepath:string, suffix?:string,confFile?:string){
@@ -179,60 +181,21 @@ export default class Pano_360ty{
 
 			this.renameElementIds();
 			if(!this.elements.parentContainer!.querySelector("#"+this.elementIDs.container)){
-				let viewportMetaSet = false;
-				if(viewportMetaSet === false){
-					this.addMeta("viewport","width=device-width, initial-scale=1");
-				}
-				this.includeStyle();
-				var share_buttons;
-				var show_impressum;
-				var tour_width;
-				var tour_height;
-				var horAlign;
-				switch(this.deviceType()){
-					case 'desktop':
-						share_buttons = this.addons_params.share_buttons;
-						show_impressum = this.addons_params.show_impressum;
-						tour_width = this.style_params.tour_dimensions.width;
-						tour_height = this.style_params.tour_dimensions.height;
-						horAlign = this.style_params.horizontal_alignment;
-						break;
-					case 'tablet':
-						share_buttons = this.responsive_params.tablet.share_buttons;
-						show_impressum = this.responsive_params.tablet.show_impressum;
-						tour_width = this.responsive_params.tablet.tour_dimensions.width;
-						tour_height = this.responsive_params.tablet.tour_dimensions.height;
-						horAlign = this.responsive_params.tablet.horizontal_alignment;
-						break;
-					case 'mobile':
-						share_buttons = this.responsive_params.mobile.share_buttons;
-						show_impressum = this.responsive_params.mobile.show_impressum;
-						tour_width = this.responsive_params.mobile.tour_dimensions.width;
-						tour_height = this.responsive_params.mobile.tour_dimensions.height;
-						horAlign = this.responsive_params.mobile.horizontal_alignment;
-						break;
-					default:
-						share_buttons = this.addons_params.share_buttons;
-						show_impressum = this.addons_params.show_impressum;
-						tour_width = this.style_params.tour_dimensions.width;
-						tour_height = this.style_params.tour_dimensions.height;
-						horAlign = this.style_params.horizontal_alignment;
-						break;
-				}
+				let params = this.getTourParams()
 				this.declareElements();
 				this.setURLParameter();
 				await this.setup_pano();
-				if(share_buttons == true){
+				if(params.share_buttons == true){
 					this.setupButtons();
 				}
-				if(show_impressum == true){
+				if(params.show_impressum == true){
 					this.createImpressum();
 				}
 				
-				this.setViewerSize(tour_width,tour_height);
+				this.setViewerSize(params.tour_width,params.tour_height);
 				
-				if(horAlign){
-					this.horizontallyAlignImage(horAlign);
+				if(params.horAlign){
+					this.horizontallyAlignImage(params.horAlign);
 				}
 				this.addListeners();
 				this.scrollLockHandler = new ScrollLock(this,this.scrollLock);
@@ -243,6 +206,42 @@ export default class Pano_360ty{
 		}
 	})
 
+}
+getTourParams=()=>{
+	switch(this.deviceType()){
+		case 'desktop':
+			return{
+				share_buttons: this.addons_params.share_buttons,
+				show_impressum: this.addons_params.show_impressum,
+				tour_width: this.style_params.tour_dimensions.width,
+				tour_height: this.style_params.tour_dimensions.height,
+				horAlign: this.style_params.horizontal_alignment,
+			}
+		case 'tablet':
+			return{
+				share_buttons: this.responsive_params.tablet.share_buttons,
+				show_impressum: this.responsive_params.tablet.show_impressum,
+				tour_width: this.responsive_params.tablet.tour_dimensions.width,
+				tour_height: this.responsive_params.tablet.tour_dimensions.height,
+				horAlign: this.responsive_params.tablet.horizontal_alignment,
+			}
+		case 'mobile':
+			return{
+				share_buttons: this.responsive_params.mobile.share_buttons,
+				show_impressum: this.responsive_params.mobile.show_impressum,
+				tour_width: this.responsive_params.mobile.tour_dimensions.width,
+				tour_height: this.responsive_params.mobile.tour_dimensions.height,
+				horAlign: this.responsive_params.mobile.horizontal_alignment,
+			}
+		default:
+			return{
+				share_buttons: this.addons_params.share_buttons,
+				show_impressum: this.addons_params.show_impressum,
+				tour_width: this.style_params.tour_dimensions.width,
+				tour_height: this.style_params.tour_dimensions.height,
+				horAlign: this.style_params.horizontal_alignment,
+			}
+	}
 }
  waitForParentContainer = async(): Promise<void> =>{
 	return new Promise((resolve)=>{
@@ -272,6 +271,7 @@ private renameElementIds = () =>{
 		buttonContainer_value_setter : "buttonContainer_value_setter_360ty_"+this.suffix,
 		targetValueSetter_button : "setTargetValue_360ty_"+this.suffix,
 		startValueSetter_button : "setStartValues_360ty_"+this.suffix,
+		fullscreenClose_button : "fullscreenClose_360ty_"+this.suffix,
 	};
 }
 //user inputs
@@ -508,7 +508,7 @@ includeStyle = () => {
 	if(this.checkIncludedStyle() == false){
 		var style_include = document.createElement("link");
 		style_include.rel = "stylesheet";
-		style_include.href = "https://storage.googleapis.com/api.360ty.cloud/360ty_styles.css";
+		style_include.href = "https://api.360ty.cloud/360ty_styles.css";
 		document.head.appendChild(style_include);
 	}
 }
@@ -581,10 +581,10 @@ setup_pano = () => {
 	return new Promise(async(resolve,reject)=>{
 		this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath),this.tour_params.confFile);
 
-		if(!this.elements.panoContainer){
+		if(!this.elements.container){
 			this.createContainer();
 		}
-		this.pano=new this.p2vrPlayer(this.elementIDs.panoContainer,this.tour_params.basepath);
+		this.pano=new this.p2vrPlayer(this.elementIDs.container,this.tour_params.basepath);
 		if(this.tour_params.node){
 			this.pano.startNode = "node"+this.tour_params.node;
 		}
@@ -609,6 +609,8 @@ setup_pano = () => {
 		}
 		try{
 			this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{
+				this.elements.panoContainer=this.getPanoContainer();
+				this.elements.panoContainer!.id= this.elementIDs.panoContainer;
 				this.onPanoConfigRead(singleImage)
 				this.loadKeyframes();
 				this.callOnNodeChange();
@@ -855,12 +857,8 @@ createContainer = () => {
 	}
  	var parentContainer = this.elements.parentContainer;
 	var container = document.createElement("div");
-	var pano_container = document.createElement("div");
-	pano_container.setAttribute("id",this.elementIDs.panoContainer);
 	container.style.width = this.elements.parentContainer.getBoundingClientRect().width + "px";
 	container.style.height = this.elements.parentContainer.getBoundingClientRect().height + "px";
-	pano_container.style.width = container.getBoundingClientRect().width + "px";
-	pano_container.style.height = container.getBoundingClientRect().height + "px";
 	if(this.style_params.backgroundColor){
 		if(this.style_params.backgroundColor.color2){
 			container.style.background = `linear-gradient(${this.style_params.backgroundColor.color1},${this.style_params.backgroundColor.color2})`;
@@ -873,14 +871,14 @@ createContainer = () => {
 	}
     container.setAttribute("id",this.elementIDs.container);
 	parentContainer.appendChild(container);
-	container.appendChild(pano_container);
 
-	this.elements.panoContainer = pano_container;
 	this.elements.container! = container;
 }
 
+getPanoContainer= ()=> this.pano?.$ || this.pano?.divSkin
+
 createImpressum = () => {
-	var parent = this.elements.container!;
+	var parent = this.elements.panoContainer!;
 	var impressumContainer = document.createElement("div");
 	impressumContainer.setAttribute("id",this.elementIDs.impressumContainer);
 	var p = document.createElement("p");
@@ -888,6 +886,7 @@ createImpressum = () => {
     impressum.setAttribute("href","https://360ty.world/");
  	impressum.setAttribute("target","_blank");
 	impressum.innerHTML = "360ty.world | Made with ♥ in Europe";
+	parent.querySelector("#"+this.elementIDs.impressumContainer)?.remove();
  	parent.appendChild(impressumContainer);
 	impressumContainer.appendChild(p);
 	p.appendChild(impressum);
@@ -915,50 +914,49 @@ for (var prop in this.tour_params){
 
 setExternalsToTourChange = () =>{
 	var hotspots = this.elements.panoContainer!.getElementsByClassName("ggskin_hotspot");
-	for(let i = 0; i<hotspots.length;i++){
-	hotspots[i].addEventListener("mouseover",() => {
-	var timesCalled = 0;
-	var hn_interval = setInterval(() => {
-		if(timesCalled < 25){
-			if(this.pano && this.pano.hotspot){
-				var hotspot = this.pano.hotspot;
-			}
-			if(hotspot.url){
-				this.hovered_node = hotspot;
-				clearInterval(hn_interval);
+	const onMouseOver = () => {
+		var timesCalled = 0;
+		var hn_interval = setInterval(() => {
+			if(timesCalled < 25){
+				if(this.pano && this.pano.hotspot){
+					var hotspot = this.pano.hotspot;
+				}
+				if(hotspot.url){
+					this.hovered_node = hotspot;
+					clearInterval(hn_interval);
+				}else{
+					timesCalled++
+					this.hovered_node = null;
+				}
 			}else{
-				timesCalled++
-				this.hovered_node = null;
+				clearInterval(hn_interval);
 			}
-		}else{
-			clearInterval(hn_interval);
-		}
-	},10);
-	});
-	hotspots[i].addEventListener("mouseup",() => {
+		},10);
+	}
+	const onMouseUp= () => {
 		if(this.hovered_node && this.hovered_node.url.startsWith("http") && this.hovered_node!.url.includes(".360ty.") && this.hovered_node!.target==="_self"){
-		var hotspotURL = this.hovered_node.url;
-		var basePathStartIndex = hotspotURL.indexOf("//")+2;
-		var basePathEndIndex = hotspotURL.indexOf("/",basePathStartIndex);
-		var basepath = hotspotURL.substring(0,basePathEndIndex+1);
-		var nodeIndex = hotspotURL.indexOf("#",basePathEndIndex)+5;
-		var nodeID = parseInt(hotspotURL.substring(nodeIndex,hotspotURL.length));
-		this.setBasePath(basepath);
-		this.tour_params.confFile = basepath + "pano.xml";
-		this.setStartNode(nodeID);
-		this.setFov(this.pano.getFov());
-		this.setPan(this.pano.getPan());
-		this.setTilt(this.pano.getTilt());
-		this.reload();
-		this.externalHotspotListenerSet = false;
+			var hotspotURL = this.hovered_node.url;
+			var basePathStartIndex = hotspotURL.indexOf("//")+2;
+			var basePathEndIndex = hotspotURL.indexOf("/",basePathStartIndex);
+			var basepath = hotspotURL.substring(0,basePathEndIndex+1);
+			var nodeIndex = hotspotURL.indexOf("#",basePathEndIndex)+5;
+			var nodeID = parseInt(hotspotURL.substring(nodeIndex,hotspotURL.length));
+			this.setBasePath(basepath);
+			this.tour_params.confFile = basepath + "pano.xml";
+			this.setStartNode(nodeID);
+			this.setFov(this.pano.getFov());
+			this.setPan(this.pano.getPan());
+			this.setTilt(this.pano.getTilt());
+			this.reload();
+			this.externalHotspotListenerSet = false;
+		}
 	}
-	});
-	}
-	if(this.externalHotspotListenerSet == false){
-		this.externalHotspotListenerSet = true;
-		this.pano.addListener("changenode",() => {
-			this.callOnNodeChange();
-		});
+
+	for(let i = 0; i<hotspots.length;i++){
+		hotspots[i].removeEventListener("mouseover",onMouseOver)
+		hotspots[i].addEventListener("mouseover",onMouseOver);
+		hotspots[i].removeEventListener("mouseup",onMouseUp);
+		hotspots[i].addEventListener("mouseup",onMouseUp);
 	}
 }
 
@@ -1023,6 +1021,13 @@ callOnNodeChange = () => {
 			}
 			if(this.tour_params.removeDrones) this.removeDrones();
 			if(this.tour_params.nodeFilter.length > 0) this.removeHotspotsByFilters();
+			if(this.externalHotspotListenerSet == false){
+				this.externalHotspotListenerSet = true;
+				this.pano.removeEventListener("changenode");
+				this.pano.addListener("changenode",() => {
+					this.callOnNodeChange();
+				});
+			}
 		}
 	}
 	
@@ -1096,10 +1101,11 @@ createButton = (onclickEvent: (e?: MouseEvent) => void, id:ElementID, text:strin
 	if(!this.elements.buttonContainer){
 		this.elements.buttonContainer = document.createElement("div");
 		this.elements.buttonContainer.setAttribute("id",this.elementIDs.buttonContainer);
-		this.elements.container!!.appendChild(this.elements.buttonContainer);
+		this.elements.panoContainer!.appendChild(this.elements.buttonContainer);
 	}
 	var button = document.createElement("button");
-    button.setAttribute("id",this.elementIDs[id]);
+	let buttonId= this.elementIDs[id] || id;
+    button.setAttribute("id",buttonId);
     button.setAttribute("class",this.elementClasses.class_shareButtons);
     if(style_display){
     	button.setAttribute("style","display: "+ style_display +";");
@@ -1108,6 +1114,7 @@ createButton = (onclickEvent: (e?: MouseEvent) => void, id:ElementID, text:strin
 		onclickEvent(e);
 	})
     button.innerHTML = text;
+	this.elements.buttonContainer.querySelector("#"+buttonId)?.remove();
 	this.elements.buttonContainer.appendChild(button);
 	this.elements[id] = button;
 }
@@ -1162,9 +1169,35 @@ getShareURL = () => {
       return shareUrl;
 }
 addListeners = () => {
-			this.windowResizeListener();
-			this.clearwebglContext_listener();
-		}
+	this.windowResizeListener();
+	this.clearwebglContext_listener();
+	this.fullscreenListener();
+}
+createFullscreenCloseButton = () =>{
+	var button = document.createElement("button");
+	button.setAttribute("id",this.elementIDs.fullscreenClose_button);
+	button.addEventListener("click",()=>{
+		this.pano.exitFullscreen();
+	})
+	button.textContent = "X";
+	this.elements.panoContainer!.appendChild(button);
+	this.elements.fullscreenClose_button = button;
+}
+removeFullscreenCloseButton = () =>{
+	this.elements.fullscreenClose_button?.remove();
+}
+fullscreenListener = () => {
+	this.pano.addListener("fullscreenenter",()=>{
+		this.createFullscreenCloseButton();
+		this.onFullscreenEnter();
+	})
+	this.pano.addListener("fullscreenexit",()=>{
+		this.removeFullscreenCloseButton()
+		this.onFullscreenExit();
+	})
+}
+onFullscreenEnter=()=>{}
+onFullscreenExit=()=>{}
 windowResizeListener = () => {
 	window.addEventListener("resize", () => {
 		let height;

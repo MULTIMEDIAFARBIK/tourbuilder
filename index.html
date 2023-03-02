@@ -6,26 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tourbuilder Test</title>
     <link rel = "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-    <script type="module" src="./dist/class-tourbuilder-360ty.js"></script>
+    <script type="module" src="./src/main.ts"></script>
+    <style>
+        html,body{
+            margin:0;
+            padding:0;
+            height:100%;
+            width:100%;
+        }
+    </style>
 </head>
 <body>
-  
+    <button onclick="enterFullscreen()">enterFullscreen</button>
     <div id="360ty_container" style="height:100vh;width:100%"></div>
    
     <script>
+        function enterFullscreen(){
+                tour_360ty.pano.enterFullscreen()
+            }
         let interval = setInterval(()=>{
             if(window["Pano_360ty"]){
                 clearInterval(interval)
                 
 			var tour_360ty = new Pano_360ty("360ty_container","https://roefixhausamwinzersteig.360ty.cloud/");
-            tour_360ty.removeExternalHotspots();
-			tour_360ty.setDimensions("100%","100%");
+			tour_360ty.setDimensions("100%","50%");
 			tour_360ty.setHorizontalAlignment("center");
 			tour_360ty.setStartNode(54);
 			tour_360ty.setViewingParameter(52.10,-9.23,1.40);
 			tour_360ty.setSingleImage(false);
-			tour_360ty.setShareButtonVisibility(false);
-			tour_360ty.setImpressumVisibility(false);
+			tour_360ty.setShareButtonVisibility(true);
+			tour_360ty.setImpressumVisibility(true);
 			tour_360ty.setDimensions_tablet("100%","16:9");
 			tour_360ty.setHorizontalAlignment_tablet("center");
 			tour_360ty.setSingleImage_tablet(false);
@@ -37,6 +47,13 @@
 			tour_360ty.setShareButtonVisibility_mobile(false);
 			tour_360ty.setImpressumVisibility_mobile(false);
             tour_360ty.setScrollLock(true);
+            tour_360ty.onFullscreenEnter = function(){
+                console.log("fullscreen enter")
+            }
+            tour_360ty.onFullscreenExit = function(){
+                console.log("fullscreen exit")
+            }
+            
 			tour_360ty.init()
             window.tour_360ty = tour_360ty;
     }

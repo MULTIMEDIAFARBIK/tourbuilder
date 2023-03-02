@@ -41,6 +41,7 @@ export interface ElementIDs {
     buttonContainer_value_setter :  string;
     targetValueSetter_button :  string;
     startValueSetter_button : string;
+    fullscreenClose_button: string;
 }
 
 export interface ElementClasses {
@@ -62,6 +63,7 @@ export interface Elements {
     targetValueSetter_button : null | HTMLElement;
     startValueSetter_button : null | HTMLElement;
     slidesButton : null | HTMLElement;
+    fullscreenClose_button : null | HTMLElement;
 }
 export interface NodeTitleFilter {
     filter: string,

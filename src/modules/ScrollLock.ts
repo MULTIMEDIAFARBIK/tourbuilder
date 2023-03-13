@@ -1,5 +1,5 @@
 import Pano_360ty from "../class-tourbuilder-360ty";
-import pano2vrPlayer from "../pano2vr_player.js";
+import pano2vrPlayer from "../pano2vr_player_v7.js";
 
 export default class ScrollLock {
     scrollLock:boolean = true;

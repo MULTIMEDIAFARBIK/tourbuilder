@@ -1,8 +1,6 @@
-
-import { esbuildCommonjs } from '@originjs/vite-plugin-commonjs'
 import path from 'path';
 import { defineConfig } from 'vite';
-
+const vitePluginIIFELibrary = require('./vite-plugin-iife-library');
 
 export default defineConfig({
   optimizeDeps:{
@@ -23,4 +21,7 @@ export default defineConfig({
       
     },
   }, 
+  plugins: [
+    vitePluginIIFELibrary("class-tourbuilder-360ty.js")
+  ]
 })

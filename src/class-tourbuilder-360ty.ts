@@ -1,7 +1,7 @@
 /*import * as pano2vrPlayer from './pano2vr_player.js';
 import pano2vrSkin from './skin_module.js';*/
 import ScrollLock from "./modules/ScrollLock";
-import pano2vrPlayer from "./pano2vr_player_v7.js";
+import pano2vrPlayer from "./pano2vr_player_v7";
 import pano2vrSkin from "./skin_module.js";
 import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
 

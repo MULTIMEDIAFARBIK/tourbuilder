@@ -18,12 +18,17 @@
 </head>
 <body>
     <button onclick="enterFullscreen()">enterFullscreen</button>
-    <div id="360ty_container" style="height:100vh;width:100%"></div>
    
     <script>
         function enterFullscreen(){
                 tour_360ty.pano.enterFullscreen()
-            }
+        }
+        setTimeout(()=>{
+            var container = document.createElement("div");
+            container.id = "360ty_container"
+            container.style = "height:100vh;width:100%"
+            document.body.appendChild(container)
+        },1000)    
         let interval = setInterval(()=>{
             if(window["Pano_360ty"]){
                 clearInterval(interval)

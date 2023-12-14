@@ -1,7 +1,7 @@
 /*import * as pano2vrPlayer from './pano2vr_player.js';
 import pano2vrSkin from './skin_module.js';*/
 import ScrollLock from "./modules/ScrollLock";
-import pano2vrPlayer from "./pano2vr_player_v7";
+import pano2vrPlayer from "./pano2vr_player";
 import pano2vrSkin from "./skin_module.js";
 import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
 
@@ -578,49 +578,52 @@ onPanoConfigRead = (singleImage: boolean) => {
 }
 
 setup_pano = () => {
-	return new Promise(async(resolve,reject)=>{
-		this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath),this.tour_params.confFile);
+	return new Promise((resolve,reject)=>{
+		this.interceptAlert(async()=>{
 
-		if(!this.elements.container){
-			this.createContainer();
-		}
-		this.pano=new this.p2vrPlayer(this.elementIDs.container,this.tour_params.basepath);
-		if(this.tour_params.node){
-			this.pano.startNode = "node"+this.tour_params.node;
-		}
-		if(typeof(this.skinClass) !== "function"){
-			this.skinClass = await this.getSkinClass(this.skinClass);
-		}
-	
-		this.skin=new this.skinClass(this.pano,this.tour_params.basepath);
-		var singleImage = false;
-		switch(this.deviceType()){
-			case 'desktop':
-				singleImage = this.addons_params.singleImage;
-				break;
-			case 'tablet':
-				singleImage = this.responsive_params.tablet.singleImage;
-				break;
-			case 'mobile':
-				singleImage = this.responsive_params.mobile.singleImage;
-				break;
-			default:
-				singleImage = this.addons_params.singleImage;
-		}
-		try{
-			this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{
-				this.elements.panoContainer=this.getPanoContainer();
-				this.elements.panoContainer!.id= this.elementIDs.panoContainer;
-				this.onPanoConfigRead(singleImage)
-				this.loadKeyframes();
-				this.callOnNodeChange();
-				resolve(this.pano);
+			this.setBasePath(await this.checkBaseapathRedirect(this.tour_params.basepath),this.tour_params.confFile);
+
+			if(!this.elements.container){
+				this.createContainer();
 			}
-			,this.tour_params.basepath)
-		}catch(err){
-			reject(err);
-		}
-	
+			this.pano=new this.p2vrPlayer(this.elementIDs.container,this.tour_params.basepath);
+			if(this.tour_params.node){
+				this.pano.startNode = "node"+this.tour_params.node;
+			}
+			if(typeof(this.skinClass) !== "function"){
+				this.skinClass = await this.getSkinClass(this.skinClass);
+			}
+		
+			this.skin=new this.skinClass(this.pano,this.tour_params.basepath);
+			var singleImage = false;
+			switch(this.deviceType()){
+				case 'desktop':
+					singleImage = this.addons_params.singleImage;
+					break;
+				case 'tablet':
+					singleImage = this.responsive_params.tablet.singleImage;
+					break;
+				case 'mobile':
+					singleImage = this.responsive_params.mobile.singleImage;
+					break;
+				default:
+					singleImage = this.addons_params.singleImage;
+			}
+			try{
+				this.pano.readConfigUrlAsync(this.tour_params.confFile || this.tour_params.basepath+"pano.xml", ()=>{
+					this.elements.panoContainer=this.getPanoContainer();
+					this.elements.panoContainer!.id= this.elementIDs.panoContainer;
+					this.onPanoConfigRead(singleImage)
+					this.loadKeyframes();
+					this.callOnNodeChange();
+					resolve(this.pano);
+				}
+				,this.tour_params.basepath)
+			
+			}catch(err){
+				reject(err);
+			}
+		})
 	})
 	
 }
@@ -1413,5 +1416,20 @@ getClassFromString = (str: string) => {
 	console.log(func);
 	return func;
 
+}
+private interceptAlert = async(cb:()=>void | Promise<void>) => {
+    // Store the original alert function
+    const originalAlert = window.alert;
+
+    // Override the alert function
+    window.alert = function(message) {
+        console.error("Alert intercepted:", message);
+    };
+
+    try {
+        await cb();
+    } finally {
+        window.alert = originalAlert;
+    }
 }
 }

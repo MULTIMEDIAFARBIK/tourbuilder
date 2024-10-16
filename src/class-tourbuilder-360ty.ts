@@ -107,6 +107,7 @@ export default class Pano_360ty{
 	scrollLock:boolean = false;
 	scrollLockHandler: ScrollLock | undefined;
 	forceStylesheet: boolean = false;
+	isFullscreen: boolean = false;
 	private externalHotspotListenerSet: boolean = false;
 
 	constructor(parentContainerID:string,basepath:string, suffix?:string,confFile?:string){
@@ -124,7 +125,7 @@ export default class Pano_360ty{
 				return "desktop";
 		}
 	};
-	isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints;
+	isTouchDevice = () => 'ontouchstart' in window || !!navigator.maxTouchPoints;
 	name = () => {
 		let instanceName = "";
 			for (var name in window){
@@ -198,7 +199,7 @@ export default class Pano_360ty{
 					this.horizontallyAlignImage(params.horAlign);
 				}
 				this.addListeners();
-				this.scrollLockHandler = new ScrollLock(this,this.scrollLock);
+				this.scrollLockHandler =  new ScrollLock(this,this.scrollLock);
 				resolve();						
 			}
 		}catch(err){
@@ -1193,10 +1194,12 @@ fullscreenListener = () => {
 	this.pano.addListener("fullscreenenter",()=>{
 		this.createFullscreenCloseButton();
 		this.onFullscreenEnter();
+		this.isFullscreen = true;
 	})
 	this.pano.addListener("fullscreenexit",()=>{
 		this.removeFullscreenCloseButton()
 		this.onFullscreenExit();
+		this.isFullscreen = false;
 	})
 }
 onFullscreenEnter=()=>{}

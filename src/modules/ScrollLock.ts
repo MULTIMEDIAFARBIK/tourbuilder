@@ -2,38 +2,46 @@ import Pano_360ty from "../class-tourbuilder-360ty";
 import pano2vrPlayer from "../old_players/pano2vr_player_v7_0_2.js";
 
 export default class ScrollLock {
-    scrollLock:boolean = true;
-    locked: boolean = false;
+    isLocked: boolean = false;
     notificated: boolean = false;
     notification = new ScrollLockNotification()
     container: HTMLElement | undefined;
     pano: pano2vrPlayer | undefined;
 
-    constructor(public tourbuilder: Pano_360ty, scrollLock?:boolean) {
-        this.scrollLock = !!scrollLock;
+    constructor(public tourbuilder: Pano_360ty, private scrollLockEnabled:boolean = true) {
+        this.scrollLockEnabled = !!scrollLockEnabled;
         this.init();
     }
     setScrollLock(scrollLock:boolean) {
-        this.scrollLock = scrollLock;
+        this.scrollLockEnabled = scrollLock;
     }
-    private lockUseful = () =>{
-        return (this.hasVScroll() && !this.tourbuilder.isTouchDevice())
+    private isLockUseful = () =>{
+        return (this.hasVScroll() && !this.tourbuilder.isTouchDevice() &&!this.tourbuilder.isFullscreen)
     }
-    private hasVScroll = () => document.body.scrollHeight >  window.outerHeight;
+    private hasVScroll = () => {
+        const hasScroll = document.body.scrollHeight > window.innerHeight;
+        return hasScroll;
+    }
     init = async() =>{
         this.container = await this.waitForContainer();
-        this.addListener();
-        this.container.appendChild(this.notification.container);
         this.pano = await this.waitForPano();
-        if(this.lockUseful()) this.setLocked(true);
+        this.pano.setLockedWheel(false)
+        if(this.scrollLockEnabled && this.isLockUseful()){
+            this.setIsLocked(true);
+            this.addListener();
+            this.container.appendChild(this.notification.container);
+        }
     }
+    
     addListener = () =>{
         if(!this.container){
             throw new Error("Can't add listener to scrollLock, container is undefined");
         }
-        this.container.addEventListener('wheel', this.scrollHandler);
-        this.container.addEventListener('mousedown', this.mouseDownHandler);
+        this.tourbuilder.elements.container!.addEventListener('wheel', this.scrollHandler, { passive: false });
+        this.tourbuilder.elements.container!.addEventListener('mousedown', this.mouseDownHandler);
+        
     }
+    
     waitForContainer = () =>{
         return new Promise<HTMLElement>((resolve)=>{
             let interval = setInterval(()=>{
@@ -41,7 +49,7 @@ export default class ScrollLock {
                     clearInterval(interval);
                     resolve(this.tourbuilder.elements.panoContainer);
                 }
-            },100)
+            },50)
         })
     }
     waitForPano = () =>{
@@ -49,35 +57,41 @@ export default class ScrollLock {
             let interval = setInterval(()=>{
                 if(this.tourbuilder.pano && this.tourbuilder.pano.getIsLoaded()){
                     clearInterval(interval);
+
                     resolve(this.tourbuilder.pano);
                 }
-            },100)
+            },50)
         })
     }
     mouseDownHandler = ()=>{
         if(this.notification.open) this.notification.hide();
     }
-    scrollHandler = (e:WheelEvent) =>{
-        if(this.scrollLock && this.lockUseful()){
-            if(e.ctrlKey)e.preventDefault();
-            this.setLocked(!e.ctrlKey);
-            this.notification.setVisibility(!e.ctrlKey)
-        }else{
-            this.setLocked(false);
-            this.notification.setVisibility(false)
-        }
-    }
-    setLocked = (locked:boolean) =>{
-        if(this.locked !== locked){
-            this.locked = locked;
-            if(!this.pano){
-                this.waitForPano().then(pano=>{
-                    this.pano = pano;
-                    this.pano.setLockedWheel(this.locked);
-                })
-            }else{
-                this.pano.setLockedWheel(this.locked);
+    scrollHandler = (e: WheelEvent) => {
+        if (this.scrollLockEnabled && this.isLockUseful()) {
+            if (e.ctrlKey) {
+                e.preventDefault(); // Always prevent default browser behavior
+                // When Ctrl is pressed
+                this.setIsLocked(false); // Unlock the wheel controls
+                this.notification.setVisibility(false); // Hide notification
+                // Allow event to reach panorama viewer
+            } else {
+                // When Ctrl is not pressed
+                this.setIsLocked(true); // Lock the wheel controls
+                this.notification.setVisibility(true); // Show notification
             }
+        }else{
+            this.notification.setVisibility(false); // Hide notification
+            this.setIsLocked(false);
+        }
+    };
+    
+    
+    setIsLocked = async(locked:boolean) =>{
+        if(this.isLocked !== locked){
+            this.isLocked = locked;
+            if(!this.pano) await this.waitForPano()
+            this.pano.setLockedWheel(this.isLocked);
+            
         }
     }
 }

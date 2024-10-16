@@ -36,36 +36,35 @@
     .ggskin{
         transition: opacity 500ms ease-in-out;
     }
-    
-}
-.scroll-lock-notification-container{
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0,0,0,.2);
-    pointer-events: none;
-    transition: opacity 200ms ease;
-    opacity: 0;
-    .scroll-lock-notification{
-        color:#fff;
-        background-color: rgba(0,0,0,.33);
-        padding: 1rem;
-        border-radius: 4px;
-        .ctrl-button{
-            font-weight: bold;
-            border: solid 1px #fff;
-            padding: 2px 4px;
-            padding-top: 0px;
+    .scroll-lock-notification-container{
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0,0,0,.2);
+        pointer-events: none;
+        transition: opacity 200ms ease;
+        opacity: 0;
+        .scroll-lock-notification{
+            color:#fff;
+            background-color: rgba(0,0,0,.33);
+            padding: 1rem;
+            border-radius: 4px;
+            .ctrl-button{
+                font-weight: bold;
+                border: solid 1px #fff;
+                padding: 2px 4px;
+                padding-top: 0px;
+            }
         }
     }
-}
-.notification-open{
-    opacity: 1;
+    .notification-open{
+        opacity: 1;
+    }
 }
 [id^="fullscreenClose_360ty_"]{
     z-index: 14;

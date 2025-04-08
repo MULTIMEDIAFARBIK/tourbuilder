@@ -668,7 +668,7 @@ loadKeyframes = async() => {
 				for(let i = 0; i< this.movement_params.loop_amount;i++){
 					if(this.movement_params.movementAborted === false){
 						await this.moveToKeyframes();
-						await this.moveHome();
+						//await this.moveHome();
 					}else{
 						break;
 					}
@@ -731,7 +731,8 @@ moveToKeyframe = (keyframe : MoveKeyframe) : Promise<void> => {
 				if(this.movement_params.movementAborted === false){
 					await this.checkActiveMovement();
 					this.setLock(keyframe.locked_controls)
-					if(keyframe.node && "node"+keyframe.node !== this.pano.getCurrentNode()){
+					const isOtherNode = keyframe.node && "node"+keyframe.node !== this.pano.getCurrentNode()
+					if(isOtherNode){
 						await this.pano.openNext("{node"+keyframe.node+"}")
 					}
 					await this.runMovement(keyframe);
@@ -759,7 +760,7 @@ checkActiveMovement = () : Promise<void> => {
 				this.onMovementAborted();
 				reject("movement aborted by user")
 			}
-			if(this.pano.F.active === false){
+			if(this.pano.I.active === false){
 				clearInterval(activeMov)
 				resolve()
 			}
@@ -1333,28 +1334,37 @@ setURLParameter = (params = this.getURLParameter()) =>{
 		this.setStartNode(parseInt(params.node));
 	}
 
-	if(params.fov_start || params.tilt_start || params.pan_start){
-		this.addKeyframe(params.fov ? parseFloat(params.fov) : this.tour_params.fov || 70,params.tilt ? parseFloat(params.tilt) : this.tour_params.tilt || 0,params.pan? parseFloat(params.pan) : this.tour_params.pan || 0,params.moveSpeed ? parseFloat(params.moveSpeed) : this.movement_params.moveSpeed || 1,params.moveLock || "none",params.node ? parseInt(params.node) : this.tour_params.node || 1)
-		if(params.fov_start){
-			this.setFov(parseFloat(params.fov_start));
-		}
-		if(params.tilt_start){
-			this.setTilt(parseFloat(params.tilt_start))
-		}
-		if(params.pan_start){
-			this.setPan(parseFloat(params.pan_start))
-		}
-	}else{
-		if(params.fov){
-			this.setFov(parseFloat(params.fov));
-		}
-		if(params.tilt){
-			this.setTilt(parseFloat(params.tilt));
-		}
-		if(params.pan){
-			this.setPan(parseFloat(params.pan));
-		}
+	const startPosition = {
+		fov: params.fov_start || params.fov,
+		tilt: params.tilt_start || params.tilt,
+		pan: params.pan_start || params.pan,
 	}
+
+	if(startPosition.fov){
+		this.setFov(parseFloat(startPosition.fov));
+	}
+	if(startPosition.tilt){
+		this.setTilt(parseFloat(startPosition.tilt))
+	}
+	if(startPosition.pan){
+		this.setPan(parseFloat(startPosition.pan))
+	}
+
+	const moveToPosition = {
+		fov: params.fov || params.fov_start,
+		tilt: params.tilt || params.tilt_start,
+		pan: params.pan || params.pan_start,
+	}
+	if(moveToPosition.fov && moveToPosition.tilt && moveToPosition.pan)
+	this.addKeyframe(
+		parseFloat(moveToPosition.fov),
+		parseFloat(moveToPosition.pan),
+		parseFloat(moveToPosition.tilt),
+		parseFloat(params.moveSpeed || "1"),
+		params.moveLock || "Mousewheel",
+		parseInt(params.node || "node1"),
+	)
+
 	if(params.singleImage){
 		this.setSingleImage(params.singleImage || params.singleImage === "" ? true : false)
 	}

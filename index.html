@@ -33,33 +33,45 @@
             if(window["Pano_360ty"]){
                 clearInterval(interval)
                 
-			var tour_360ty = new Pano_360ty("360ty_container","https://planai-hochwurzen-winter.360ty.cloud/");
-			tour_360ty.setDimensions("100%","50%");
-			tour_360ty.setHorizontalAlignment("center");
-			tour_360ty.setStartNode(54);
-			tour_360ty.setViewingParameter(52.10,-9.23,1.40);
-			tour_360ty.setSingleImage(false);
-			tour_360ty.setShareButtonVisibility(true);
-			tour_360ty.setImpressumVisibility(true);
-			tour_360ty.setDimensions_tablet("100%","16:9");
-			tour_360ty.setHorizontalAlignment_tablet("center");
-			tour_360ty.setSingleImage_tablet(false);
-			tour_360ty.setShareButtonVisibility_tablet(false);
-			tour_360ty.setImpressumVisibility_tablet(false);
-			tour_360ty.setDimensions_mobile("100%","16:9");
-			tour_360ty.setHorizontalAlignment_mobile("center");
-			tour_360ty.setSingleImage_mobile(false);
-			tour_360ty.setShareButtonVisibility_mobile(false);
-			tour_360ty.setImpressumVisibility_mobile(false);
-            tour_360ty.setScrollLock(true);
-            tour_360ty.onFullscreenEnter = function(){
-                console.log("fullscreen enter")
-            }
-            tour_360ty.onFullscreenExit = function(){
-                console.log("fullscreen exit")
-            }
-            
-			tour_360ty.init()
+			
+                var tour_360ty = new Pano_360ty("360ty_container","berghof-winter.360ty.cloud");
+
+tour_360ty.setDimensions("100%","21:9");
+
+tour_360ty.setHorizontalAlignment("center");
+
+tour_360ty.setStartNode(4);
+
+tour_360ty.setViewingParameter(70.00,-0.35,-34.63);
+
+tour_360ty.setSingleImage(false);
+
+tour_360ty.setShareButtonVisibility(false);
+
+tour_360ty.setImpressumVisibility(false);
+
+tour_360ty.setDimensions_tablet("100%","16:9");
+
+tour_360ty.setHorizontalAlignment_tablet("center");
+
+tour_360ty.setSingleImage_tablet(false);
+
+tour_360ty.setShareButtonVisibility_tablet(false);
+
+tour_360ty.setImpressumVisibility_tablet(false);
+
+tour_360ty.setDimensions_mobile("100%","16:9");
+
+tour_360ty.setHorizontalAlignment_mobile("center");
+
+tour_360ty.setSingleImage_mobile(false);
+
+tour_360ty.setShareButtonVisibility_mobile(false);
+
+tour_360ty.setImpressumVisibility_mobile(false);
+
+
+tour_360ty.init();
             window.tour_360ty = tour_360ty;
     }
 

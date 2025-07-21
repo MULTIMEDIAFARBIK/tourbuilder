@@ -523,9 +523,9 @@ createImpressum = () => {
 	impressumContainer.setAttribute("id",this.elementIDs.impressumContainer);
 	var p = document.createElement("p");
  	var impressum = document.createElement("a");
-    impressum.setAttribute("href","https://360ty.world/");
+    impressum.setAttribute("href","https://multimediafabrik.com/digitalagentur");
  	impressum.setAttribute("target","_blank");
-	impressum.innerHTML = "360ty.world | Made with ♥ in Europe";
+	impressum.innerHTML = "MUTLIMEDIAFABRIK | Made with ♥ in Europe";
 	parent.querySelector("#"+this.elementIDs.impressumContainer)?.remove();
  	parent.appendChild(impressumContainer);
 	impressumContainer.appendChild(p);

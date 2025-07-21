@@ -435,10 +435,10 @@ removeElement = (element: HTMLElement) => {
 	if(!element.parentElement) throw new Error(`can't remove child when there's no parent`)
 	element.parentElement.removeChild(element);
 }
-reload = () => {
+reload = async() => {
 	this.externalHotspotListenerSet = false;
-	this.clearwebglContext()
     if(this.elements.container && this.elements.container.parentElement){
+		this.elements.container.innerHTML = "";
 		this.removeElement(this.elements.container);
     }
 	this.elements.container = null;
@@ -474,9 +474,9 @@ reload = () => {
 		this.elements.impressumContainer = null;
 	}
 	this.onReload();
-	this.init().then(()=>{
-		this.callAfterReload();
-	});
+	this.destroyPanoInstance();
+	await this.init()
+	this.callAfterReload();
     
 }
 checkKeyframeParams = (keyframeParams: MoveKeyframe) : boolean => {
@@ -567,10 +567,8 @@ onPanoConfigRead = (singleImage: boolean) => {
 	if(this.pano.setZoomCenterCursor){
 		this.pano.setZoomCenterCursor(0);
 	}
-	if(singleImage === true){
-		this.pano.removeHotspots();
-		this.pano.stopAutorotate();
-	}
+	this.setActiveSingleImage(singleImage);
+	this.pano.stopAutorotate();
 	if(this.skin_variables){
 		this.changeSkinVars();
 	}
@@ -588,6 +586,7 @@ setup_pano = () => {
 				this.createContainer();
 			}
 			this.pano=new this.p2vrPlayer(this.elementIDs.container,this.tour_params.basepath);
+			if(window) window.pano = this.pano;
 			if(this.tour_params.node){
 				this.pano.startNode = "node"+this.tour_params.node;
 			}
@@ -1397,17 +1396,39 @@ waitForPanoLoad = async() : Promise<void> =>{
     })
 }
 clearwebglContext = () => {
-    if(this.elements.panoContainer){
-        var canvas = this.elements.panoContainer.getElementsByTagName("canvas");
-        for( let i = 0; i< canvas.length;i++){
-            canvas[i].getContext('webgl')!.getExtension('WEBGL_lose_context')!.loseContext();
-        }
-        console.log("panorama wegl context cleared");
-    }else{
-        console.log("panorama wegl context not found");
-
-    }
+   const canvasList = this.elements.container?.querySelectorAll("canvas") || [];
+		for (let canvas of canvasList) {
+			const gl = canvas.getContext("webgl") || canvas.getContext("webgl2");
+			const ext = gl?.getExtension("WEBGL_lose_context");
+			if (ext) ext.loseContext();
+			canvas.remove(); // remove from DOM to break references
+		}
 }
+
+destroyPanoInstance = () => {
+	if (this.pano) {
+		// Stop autorotation
+		if (this.pano.stopAutorotate) this.pano.stopAutorotate();
+
+		// Remove all event listeners if you added any manually
+		try {
+			this.pano.removeEventListener("changenode");
+			this.pano.removeEventListener("fullscreenenter");
+			this.pano.removeEventListener("fullscreenexit");
+		} catch (e) {
+			console.warn("Could not remove pano listeners", e);
+		}
+		this.clearwebglContext()
+		// Kill the WebGL context
+	
+
+		// Null all pano references to allow GC
+		this.pano = null;
+		if(window?.pano) window.pano = null;
+		this.skin = null;
+	}
+}
+
 getSkinClass = (url: string) => {
 	return new Promise((resolve,reject)=>{
 		try{

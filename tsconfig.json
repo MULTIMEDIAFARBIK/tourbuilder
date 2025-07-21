@@ -9,13 +9,16 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "noEmit": true,
+    "noEmit": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "downlevelIteration": true,
     "noImplicitAny": false,
     "allowSyntheticDefaultImports":true,
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
   },
   "include": ["./src"]
 }

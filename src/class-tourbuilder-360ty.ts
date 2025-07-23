@@ -1,9 +1,9 @@
-/*import * as pano2vrPlayer from './pano2vr_player.js';
-import pano2vrSkin from './skin_module.js';*/
 import ScrollLock from "./modules/ScrollLock";
 import pano2vrPlayer from "./pano2vr_player";
 import pano2vrSkin from "./skin_module.js";
-import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
+import { ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, ParsedQueryParams, QueryParams, SkinVariable, TourNode } from './types.js';
+import PanoSettings from './classes/PanoSettings';
+import MovementManager from './classes/MovementManager';
 
 export default class Pano_360ty{
 	suffix : string = "";
@@ -42,70 +42,30 @@ export default class Pano_360ty{
 		fullscreenClose_button : null,
 		slidesButton : null,
 	};
-	tour_params: TourParams = {
-		basepath : "",
-		confFile: "",
-		nodeFilter: [],
-		removeExternals: false,
-		removeDrones: false,
-		node : null,
-		fov : null,
-		tilt : null,
-		pan : null,
-		roll : null,
-	};
-	movement_params: MovementParams = {
-		keyframes : [],
-		delay : 0,
-		loop_amount : 1,
-		moveSpeed : 1,
-		movementAborted : false,
-	}
-	addons_params: AddonsParams = {
-		singleImage : false,
-		share_buttons : false,
-		show_impressum : true,
-	};
-	style_params: StyleParams = {
-		tour_dimensions: {
-			width: "100%",
-			height: "16:9"
-		},
-		horizontal_alignment : "center",
-	};
-	responsive_params: ResponsiveParams = {
-		tablet : {
-			tour_dimensions : {
-				width: "100%",
-				height: "16:9"
-			},
-			singleImage : false,
-			share_buttons : false,
-			show_impressum : true,
-			horizontal_alignment : "center",
-		},
-		mobile: {
-			tour_dimensions : {
-				width: "100%",
-				height: "9:16"
-			},
-			singleImage : false,
-			share_buttons : false,
-			show_impressum : false,
-			horizontal_alignment : "center",
-		}
-	}
-	skin_variables: SkinVariable[] = [];
-	hovered_node: TourNode | null = null;
+        settings: PanoSettings = new PanoSettings();
+        movementManager: MovementManager = new MovementManager(this);
+        get tour_params() { return this.settings.tourParams; }
+        get movement_params() { return this.settings.movementParams; }
+        get addons_params() { return this.settings.addonsParams; }
+        get style_params() { return this.settings.styleParams; }
+        get responsive_params() { return this.settings.responsiveParams; }
+        get skin_variables() { return this.settings.skinVariables; }
+        get scrollLock() { return this.settings.scrollLock; }
+        set scrollLock(val: boolean) {
+                this.settings.setScrollLock(val);
+                if(this.scrollLockHandler){
+                        this.scrollLockHandler.setScrollLock(val);
+                }
+        }
+        hovered_node: TourNode | null = null;
 	pano:typeof pano2vrPlayer = null;
 	skin:typeof pano2vrSkin | null = null;
 	//@ts-expect-error
 	p2vrPlayer: typeof pano2vrPlayer = window.pano2vrPlayer || pano2vrPlayer;
 	//@ts-expect-error
 	skinClass: typeof pano2vrSkin = window.pano2vrSkin || pano2vrSkin;
-	controlsListener:ControlsListener = {};
-	scrollLock:boolean = false;
-	scrollLockHandler: ScrollLock | undefined;
+        controlsListener:ControlsListener = {};
+        scrollLockHandler: ScrollLock | undefined;
 	forceStylesheet: boolean = false;
 	isFullscreen: boolean = false;
 	private externalHotspotListenerSet: boolean = false;
@@ -162,15 +122,6 @@ export default class Pano_360ty{
 					return false;
 				}
 			};
-	parseDomain = (domain: string) =>{
-		domain = domain.replace(/(?:http(?:s?):\/{2})?([\w-?]*\.\w*\.\w*\.*\w*)(?:\S*\s*)/gi,"$1")
-		return domain;
-	}
-	parseBasepath = (basepath: string) =>{
-		basepath = this.parseDomain(basepath)
-		if(basepath.endsWith("/")) basepath = basepath.substring(0, basepath.length - 1)
-		return "https://" + basepath + "/"
-	}
 	checkBaseapathRedirect = async(basepath: string) =>{
 		try{
 			let res = await fetch(basepath,{redirect: "manual"});
@@ -283,160 +234,51 @@ private renameElementIds = () =>{
 	};
 }
 //user inputs
-setBasePath = (url:string,confFile?:string) =>{
-	if(!url || url === "") return
-	this.tour_params.basepath = this.parseBasepath(url)
-	this.tour_params.confFile = confFile;
-}
-setBackgroundImage = (url:string) => {
-	this.style_params.backgroundImage = url;
-}
-setBackgroundColor = (color1:string,color2:string) => {
-	this.style_params.backgroundColor = {color1:color1,color2:color2};
-}
-setDimensions = (width: string | number, height: string | number) => {
-	this.setWidth(width);
-	this.setHeight(height);
-}
-setWidth = (width: string | number) => {
-	this.style_params.tour_dimensions.width = width;
-}
-setHeight = (height: string | number) => {
-	this.style_params.tour_dimensions.height = height;
-}
-setPanoConfigFile = (url: string) => {
-	this.tour_params.confFile = url;
-}
-setStartNode = (nodeNr: number) => {
-	this.tour_params.node = nodeNr
-}
-setViewingParameter = (fov:number,tilt:number,pan:number,roll?:number):void => {
-	this.setFov(fov);
-	this.setTilt(tilt);
-	this.setPan(pan);
-	if(roll){
-		this.setRoll(roll);
-	}
-}
-setFov = (fov:number) => {
-	this.tour_params.fov = fov
-}
-setTilt = (tilt: number) => {
-	this.tour_params.tilt = tilt
-}
-setPan = (pan: number) => {
-	this.tour_params.pan = pan
-}
-setRoll = (roll: number) => {
-	this.tour_params.roll = roll
-}
-setSingleImage = (bool: boolean) => {
-	this.addons_params.singleImage = bool
-}
-setShareButtonVisibility = (bool: boolean) => {
-	this.addons_params.share_buttons = bool
-}
-setImpressumVisibility = (bool:boolean) =>{
-	this.addons_params.show_impressum = bool
-}
-setHorizontalAlignment = (value: HorizonalAlignment) => {
-	this.style_params.horizontal_alignment = value
-}
-setSkinClass = (newClass: typeof pano2vrSkin) => {
-		this.skinClass = newClass
-}
-useBasepathSkin = () =>{
-	this.skinClass = this.tour_params.basepath + "skin.js";
-}
-addNodeTitleFilter = (filter: string, caseSensitive?: boolean) =>{
-	this.tour_params.nodeFilter.push({filter,caseSensitive})
-}
-removeExternalHotspots = () =>{
-	this.tour_params.removeExternals = true;
-}
-removeDroneHotspots = () =>{
-	this.tour_params.removeDrones = true;
-}
+setBasePath = (url:string,confFile?:string) => this.settings.setBasePath(url,confFile);
+setBackgroundImage = (url:string) => this.settings.setBackgroundImage(url);
+setBackgroundColor = (color1:string,color2:string) => this.settings.setBackgroundColor(color1,color2);
+setDimensions = (width: string | number, height: string | number) => this.settings.setDimensions(width,height);
+setWidth = (width: string | number) => this.settings.setWidth(width);
+setHeight = (height: string | number) => this.settings.setHeight(height);
+setPanoConfigFile = (url: string) => this.settings.setPanoConfigFile(url);
+setStartNode = (nodeNr: number) => this.settings.setStartNode(nodeNr);
+setViewingParameter = (fov:number,tilt:number,pan:number,roll?:number):void => this.settings.setViewingParameter(fov,tilt,pan,roll);
+setFov = (fov:number) => this.settings.setFov(fov);
+setTilt = (tilt: number) => this.settings.setTilt(tilt);
+setPan = (pan: number) => this.settings.setPan(pan);
+setRoll = (roll: number) => this.settings.setRoll(roll);
+setSingleImage = (bool: boolean) => this.settings.setSingleImage(bool);
+setShareButtonVisibility = (bool: boolean) => this.settings.setShareButtonVisibility(bool);
+setImpressumVisibility = (bool:boolean) => this.settings.setImpressumVisibility(bool);
+setHorizontalAlignment = (value: HorizonalAlignment) => this.settings.setHorizontalAlignment(value);
+setSkinClass = (newClass: typeof pano2vrSkin) => { this.skinClass = newClass };
+useBasepathSkin = () => { this.skinClass = this.tour_params.basepath + "skin.js"; };
+addNodeTitleFilter = (filter: string, caseSensitive?: boolean) => this.settings.addNodeTitleFilter(filter,caseSensitive);
+removeExternalHotspots = () => this.settings.removeExternalHotspots();
+removeDroneHotspots = () => this.settings.removeDroneHotspots();
 //tablet parameter
-setDimensions_tablet = (width: string | number, height: string | number) : void => {
-	this.setWidth_tablet(width);
-	this.setHeight_tablet(height);
-}
-setWidth_tablet = (width:string | number) => {
-	this.responsive_params.tablet.tour_dimensions.width = width;
-}
-setHeight_tablet = (height: string | number) : void => {
-	this.responsive_params.tablet.tour_dimensions.height = height;
-}
-setSingleImage_tablet = (bool: boolean) => {
-	this.responsive_params.tablet.singleImage = bool
-}
-setShareButtonVisibility_tablet = (bool : boolean) => {
-	this.responsive_params.tablet.share_buttons = bool
-}
-setImpressumVisibility_tablet = (bool : boolean) => {
-	this.responsive_params.tablet.show_impressum = bool
-}
-setHorizontalAlignment_tablet = (value : HorizonalAlignment) => {
-	this.responsive_params.tablet.horizontal_alignment = value
-}
+setDimensions_tablet = (width: string | number, height: string | number) => this.settings.setDimensions_tablet(width,height);
+setWidth_tablet = (width:string | number) => this.settings.setWidth_tablet(width);
+setHeight_tablet = (height: string | number) => this.settings.setHeight_tablet(height);
+setSingleImage_tablet = (bool: boolean) => this.settings.setSingleImage_tablet(bool);
+setShareButtonVisibility_tablet = (bool : boolean) => this.settings.setShareButtonVisibility_tablet(bool);
+setImpressumVisibility_tablet = (bool : boolean) => this.settings.setImpressumVisibility_tablet(bool);
+setHorizontalAlignment_tablet = (value : HorizonalAlignment) => this.settings.setHorizontalAlignment_tablet(value);
 //mobile parameter
-setDimensions_mobile = (width : string | number, height: string | number) => {
-	this.setWidth_mobile(width);
-	this.setHeight_mobile(height);
-}
-setWidth_mobile = (width: string | number) => {
-	this.responsive_params.mobile.tour_dimensions.width = width;
-}
-setHeight_mobile = (height: string | number) => {
-	this.responsive_params.mobile.tour_dimensions.height = height;
-}
-setSingleImage_mobile = (bool : boolean) => {
-	this.responsive_params.mobile.singleImage = bool
-}
-setShareButtonVisibility_mobile = (bool: boolean): void => {
-	this.responsive_params.mobile.share_buttons = bool
-}
-setImpressumVisibility_mobile = (bool: boolean) => {
-	this.responsive_params.mobile.show_impressum = bool
-}
-setHorizontalAlignment_mobile = (value: HorizonalAlignment) => {
-	this.responsive_params.mobile.horizontal_alignment = value
-}
+setDimensions_mobile = (width : string | number, height: string | number) => this.settings.setDimensions_mobile(width,height);
+setWidth_mobile = (width: string | number) => this.settings.setWidth_mobile(width);
+setHeight_mobile = (height: string | number) => this.settings.setHeight_mobile(height);
+setSingleImage_mobile = (bool : boolean) => this.settings.setSingleImage_mobile(bool);
+setShareButtonVisibility_mobile = (bool: boolean) => this.settings.setShareButtonVisibility_mobile(bool);
+setImpressumVisibility_mobile = (bool: boolean) => this.settings.setImpressumVisibility_mobile(bool);
+setHorizontalAlignment_mobile = (value: HorizonalAlignment) => this.settings.setHorizontalAlignment_mobile(value);
 //
-setSkinVariables = (array_vars: SkinVariable[]) => {
-	array_vars.forEach((obj_var: SkinVariable) => {
-		this.skin_variables.push(obj_var)
-	})
-}
-setMovementDelay = (delay : number) => {
-	this.movement_params.delay = delay
-}
-setMovementLoopAmount = (loop_amount: number) => {
-	this.movement_params.loop_amount = loop_amount
-}
-setScrollLock = (lock: boolean) => {
-	this.scrollLock = lock;
-	if(this.scrollLockHandler){
-		this.scrollLockHandler.setScrollLock(lock);
-	}
-}
-addKeyframe = (fov:number,tilt:number,pan:number,speed: number,locked_controls: ControlsLock, node: number, pause = 0) => {
-	var keyframeParams: MoveKeyframe = {
-		fov,
-		tilt,
-		pan,
-		speed,
-		locked_controls,
-		node,
-		pause
-	}
-	let valid = this.checkKeyframeParams(keyframeParams);
-	if(!valid){
-		throw new Error("keyframe values not valid. -> (fov:number,tilt:number,pan:number,speed:number,locked_controls:'all'||'none'||'Mousewheel'||'Mouse'||'Keyboard'||'Keyboard+Mousewheel',[optional]node:number)")
-	}
-	this.movement_params.keyframes.push(keyframeParams);
-	
+setSkinVariables = (array_vars: SkinVariable[]) => this.settings.setSkinVariables(array_vars);
+setMovementDelay = (delay: number) => this.settings.setMovementDelay(delay);
+setMovementLoopAmount = (loop_amount: number) => this.settings.setMovementLoopAmount(loop_amount);
+setScrollLock = (lock: boolean) => { this.scrollLock = lock; };
+addKeyframe = (fov:number,tilt:number,pan:number,speed:number,locked_controls: ControlsLock, node:number, pause = 0) => {
+        this.settings.addKeyframe(fov,tilt,pan,speed,locked_controls,node,pause);
 }
 removeElement = (element: HTMLElement) => {
 	if(!element.parentElement) throw new Error(`can't remove child when there's no parent`)
@@ -485,15 +327,6 @@ reload = async() => {
 	await this.init()
 	this.callAfterReload();
     
-}
-checkKeyframeParams = (keyframeParams: MoveKeyframe) : boolean => {
-	if(typeof(keyframeParams.fov) === "number" && typeof(keyframeParams.tilt) === "number" && typeof(keyframeParams.pan) === "number" &&
-	typeof(keyframeParams.speed) === "number" && (keyframeParams.locked_controls === 'all'||'none'||'Mousewheel'||'Mouse'||'Keyboard'||'Keyboard+Mousewheel')
-	&& typeof(keyframeParams.node) === "number" || "undefined"){
-		return true
-	}else{
-		return false
-	}
 }
 //
 checkIncludedStyle = () => {
@@ -647,134 +480,11 @@ pano_UpdateViewingParams = () => {
 		this.pano.setPan(this.tour_params.pan)
 	}
 }
-moveHome = async()=>{
-	let homeKeyframe: MoveKeyframe = {
-		node: this.tour_params.node || 1,
-		fov: this.tour_params.fov || 75,
-		tilt: this.tour_params.tilt || 0,
-		pan: this.tour_params.pan || 0,
-		locked_controls:"Mousewheel",
-		speed:1,
-		pause:0
-	}
-	await this.moveToKeyframe(homeKeyframe);
-}
-loadKeyframes = async() => {
-	setTimeout(async() => {
-			if(this.movement_params.keyframes.length !== 0){
-				if(!this.elements.panoContainer){
-					throw new Error("can't move to keyframe if no panoContainer is defined")
-				}
-				this.elements.panoContainer.addEventListener("mousedown",() => {
-			
-				this.movement_params.movementAborted = true
-					
-				});
-				this.elements.panoContainer.addEventListener("touchstart",() => {
-					this.movement_params.movementAborted = true
-				})
-				for(let i = 0; i< this.movement_params.loop_amount;i++){
-					if(this.movement_params.movementAborted === false){
-						await this.moveToKeyframes();
-						//await this.moveHome();
-					}else{
-						break;
-					}
-				}
-				this.onMovementFinished();
-			}
-	
-	},this.movement_params.delay);
-}/*
-moveToStartNode = () : Promise<void> => {
-	return new Promise((resolve, reject) => {
-		if(!this.elements.panoContainer){
-			throw new Error("can't move to keyframe if no panoContainer is defined")
-		}
-		if(this.tour_params.node){
-			this.elements.panoContainer.addEventListener("mousedown",function(){
-				reject("movement aborted by user")
-		});
-		this.elements.panoContainer.addEventListener("touchstart",function(){
-			reject("movement aborted by user")
-		})
-			if(parseInt(this.pano.getCurrentNode().substring(4)) !== this.tour_params.node){
-				this.pano.openNext("{node"+this.tour_params.node+"}")
-			}
-			resolve();
-		}else{
-			reject("start node not set");
-		}
-	})
-}*/
-sleep = (milliseconds:number) =>{
-	return new Promise(resolve => setTimeout(resolve, milliseconds))
-}
- moveToKeyframes = async() => {
-		try{
-			return await Promise.allSettled(this.movement_params.keyframes.map(async(keyframe) =>{
-			const frame = await this.moveToKeyframe(keyframe);
-			return frame;
-		}))
-	}catch(err){
-		console.log(err)
-		return null;
-	}
-}
-runMovement = (keyframe:MoveKeyframe) =>{
-	return new Promise<void>((resolve) =>{
-		this.pano.moveTo(keyframe.pan, keyframe.tilt, keyframe.fov,keyframe.speed,0,1);
-		let moveInterval = setInterval(async()=>{
-			if(this.pano.getPan().toFixed(2) === keyframe.pan.toFixed(2) && this.pano.getFov().toFixed(2) === keyframe.fov.toFixed(2) && keyframe.tilt.toFixed(2) === keyframe.tilt.toFixed(2)){
-				clearInterval(moveInterval);
-				await this.sleep(keyframe.pause)
-				resolve();
-			}
-		},50);
-	})
-}
-moveToKeyframe = (keyframe : MoveKeyframe) : Promise<void> => {
-		try{
-			return new Promise<void>(async(resolve, reject) =>{
-				if(this.movement_params.movementAborted === false){
-					await this.checkActiveMovement();
-					this.setLock(keyframe.locked_controls)
-					const isOtherNode = keyframe.node && "node"+keyframe.node !== this.pano.getCurrentNode()
-					if(isOtherNode){
-						await this.pano.openNext("{node"+keyframe.node+"}")
-					}
-					await this.runMovement(keyframe);
-					
-					console.log("waiting")
-					let time = 0;
-					setInterval(()=>time++,1)
-					setTimeout(()=>{
-						this.removeLockAfterMovement(keyframe.locked_controls);
-						if(keyframe.node && !this.pano.getNodeIds().includes("node"+keyframe.node)){
-							reject("Aborted Movement! There is no node"+keyframe.node+" in this tour.")
-						}
-						console.log("waited ",time)
-						resolve();
-					},keyframe.pause)
-				}
-			})
-			
-		}catch(err){throw new Error(err as string)}
-}
-checkActiveMovement = () : Promise<void> => {
-	return new Promise(async(resolve,reject) => {
-		var activeMov = setInterval(() => {
-			if(this.movement_params.movementAborted === true){
-				this.onMovementAborted();
-				reject("movement aborted by user")
-			}
-			if(this.pano.I.active === false){
-				clearInterval(activeMov)
-				resolve()
-			}
-		},100)
-	});
-}
+moveHome = async()=> this.movementManager.moveHome();
+loadKeyframes = async() => this.movementManager.loadKeyframes();
+sleep = (milliseconds:number) => new Promise(resolve => setTimeout(resolve, milliseconds));
+moveToKeyframes = async() => this.movementManager.moveToKeyframes();
+moveToKeyframe = (keyframe: MoveKeyframe) => this.movementManager.moveToKeyframe(keyframe);
 onMovementAborted = () => {}
 onMovementFinished = () => {}
 changeSkinVars = () => {
@@ -788,80 +498,6 @@ changeSkinVars = () => {
 			});
 		});
 	} 
-}
-removeLockAfterMovement = (type: ControlsLock) => {
-	if(type != "none"){
-	switch (type){
-		case "all":
-			var lock_controls_interval = setInterval(() => {
-					if(this.pano.F.active == false){
-						clearInterval(lock_controls_interval);
-						this.pano.setLocked(false);
-					}
-				},100);
-			break;
-		case "Mousewheel":
-			var lock_controls_interval = setInterval(() => {
-					if(this.pano.F.active == false){
-						clearInterval(lock_controls_interval);
-						this.pano.setLockedWheel(false);
-					}
-				},100);
-			break;
-		case "Mouse":
-			var lock_controls_interval = setInterval(() => {
-					if(this.pano.F.active == false){
-						clearInterval(lock_controls_interval);
-						this.pano.setLockedMouse(false);
-					}
-				},100);
-			break;
-		case "Keyboard":
-			var lock_controls_interval = setInterval(() => {
-					if(this.pano.F.active == false){
-						clearInterval(lock_controls_interval);
-						this.pano.setLockedKeyboard(false);
-					}
-				},100);
-			break;
-		case "Keyboard+Mousewheel":
-			var lock_controls_interval = setInterval(() => {
-					if(this.pano.F.active == false){
-						clearInterval(lock_controls_interval);
-						this.pano.setLockedKeyboard(false);
-						this.pano.setLockedWheel(false);
-					}
-				},100);
-			break;
-		default:
-			throw new Error("couldnt find lock-parameter "+type);
-		}
-	}
-}
-setLock = (type : ControlsLock) => {
-	if(type != "none"){
-	switch (type){
-		case "all":
-			this.pano.setLocked(true);
-			break;
-		case "Mousewheel":
-			this.pano.setLockedWheel(true);
-			break;
-		case "Mouse":
-			this.pano.setLockedMouse(true);
-			break;
-		case "Keyboard":
-			this.pano.setLockedKeyboard(true);
-			break;
-		case "Keyboard+Mousewheel":
-			this.pano.setLockedKeyboard(true);
-			this.pano.setLockedWheel(true);
-			break;
-		default:
-			console.log("couldnt find lock-parameter "+type);
-			break;
-		}
-	}
 }
 
 createContainer = () => {
@@ -896,9 +532,9 @@ createImpressum = () => {
 	impressumContainer.setAttribute("id",this.elementIDs.impressumContainer);
 	var p = document.createElement("p");
  	var impressum = document.createElement("a");
-    impressum.setAttribute("href","https://360ty.world/");
+    impressum.setAttribute("href","https://multimediafabrik.com/digitalagentur");
  	impressum.setAttribute("target","_blank");
-	impressum.innerHTML = "360ty.world | Made with ♥ in Europe";
+	impressum.innerHTML = "MUTLIMEDIAFABRIK | Made with ♥ in Europe";
 	parent.querySelector("#"+this.elementIDs.impressumContainer)?.remove();
  	parent.appendChild(impressumContainer);
 	impressumContainer.appendChild(p);

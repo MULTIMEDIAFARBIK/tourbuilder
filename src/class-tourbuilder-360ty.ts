@@ -5,8 +5,6 @@ import pano2vrPlayer from "./pano2vr_player";
 import pano2vrSkin from "./skin_module.js";
 import { AddonsParams, ControlsListener, ControlsLock, DeviceType, ElementClasses, ElementID, ElementIDs, Elements, HorizonalAlignment, MoveKeyframe, MovementParams, ParsedQueryParams, QueryParams, ResponsiveParams, SkinVariable, StyleParams, TourNode, TourParams } from './types.js';
 
-declare const window : any;
-
 export default class Pano_360ty{
 	suffix : string = "";
 	elementIDs: ElementIDs = {
@@ -101,7 +99,9 @@ export default class Pano_360ty{
 	hovered_node: TourNode | null = null;
 	pano:typeof pano2vrPlayer = null;
 	skin:typeof pano2vrSkin | null = null;
+	//@ts-expect-error
 	p2vrPlayer: typeof pano2vrPlayer = window.pano2vrPlayer || pano2vrPlayer;
+	//@ts-expect-error
 	skinClass: typeof pano2vrSkin = window.pano2vrSkin || pano2vrSkin;
 	controlsListener:ControlsListener = {};
 	scrollLock:boolean = false;
@@ -110,11 +110,15 @@ export default class Pano_360ty{
 	isFullscreen: boolean = false;
 	private externalHotspotListenerSet: boolean = false;
 
-	constructor(parentContainerID:string,basepath:string, suffix?:string,confFile?:string){
+	constructor(parentContainer:HTMLElement | string,basepath:string, suffix?:string,confFile?:string){
 		this.suffix = suffix || "";
 		this.setBasePath(basepath,confFile);
 		if(confFile)this.tour_params.confFile = confFile;
-		this.elementIDs.parentContainer = parentContainerID;
+		console.log(typeof parentContainer)
+		this.elementIDs.parentContainer = typeof parentContainer === "string" ? parentContainer : parentContainer.id;
+		if(parentContainer && typeof parentContainer !== "string"){
+			this.elements.parentContainer = parentContainer;
+		}
 	}
 	deviceType = () : DeviceType=>{
 			if(window.matchMedia("only screen and (max-width: 900px)").matches == true){
@@ -129,6 +133,8 @@ export default class Pano_360ty{
 	name = () => {
 		let instanceName = "";
 			for (var name in window){
+					//@ts-expect-error
+
 			if (window[name] == this){
 				instanceName = name;
 			}
@@ -181,6 +187,7 @@ export default class Pano_360ty{
 			await this.waitForParentContainer();
 
 			this.renameElementIds();
+			console.log(this.elementIDs.parentContainer,this.elements.parentContainer)
 			if(!this.elements.parentContainer!.querySelector("#"+this.elementIDs.container)){
 				let params = this.getTourParams()
 				this.declareElements();
@@ -247,8 +254,8 @@ getTourParams=()=>{
  waitForParentContainer = async(): Promise<void> =>{
 	return new Promise((resolve)=>{
 		let init_interval = setInterval(()=>{
-			if(document.getElementById(this.elementIDs.parentContainer)){
-				this.elements.parentContainer = document.getElementById(this.elementIDs.parentContainer);
+			if(this.elements.parentContainer || document.getElementById(this.elementIDs.parentContainer)){
+				this.elements.parentContainer = this.elements.parentContainer || document.getElementById(this.elementIDs.parentContainer);
 				clearInterval(init_interval);
 				resolve();
 			}
@@ -586,6 +593,8 @@ setup_pano = () => {
 				this.createContainer();
 			}
 			this.pano=new this.p2vrPlayer(this.elementIDs.container,this.tour_params.basepath);
+				//@ts-expect-error
+
 			if(window) window.pano = this.pano;
 			if(this.tour_params.node){
 				this.pano.startNode = "node"+this.tour_params.node;
@@ -1424,6 +1433,7 @@ destroyPanoInstance = () => {
 
 		// Null all pano references to allow GC
 		this.pano = null;
+			//@ts-expect-error
 		if(window?.pano) window.pano = null;
 		this.skin = null;
 	}

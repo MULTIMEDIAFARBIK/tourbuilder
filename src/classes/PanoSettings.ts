@@ -5,6 +5,7 @@ export default class PanoSettings {
         basepath: '',
         confFile: '',
         nodeFilter: [],
+        allowScreenshot: false,
         removeExternals: false,
         removeDrones: false,
         node: null,
@@ -232,6 +233,10 @@ export default class PanoSettings {
     setScrollLock(lock: boolean) {
         this.scrollLock = lock;
     }
+
+    setAllowScreenshot(bool: boolean) {
+        this.tourParams.allowScreenshot = bool;
+    }   
 
     addKeyframe(fov: number, tilt: number, pan: number, speed: number, locked_controls: ControlsLock, node: number, pause = 0) {
         const keyframeParams: MoveKeyframe = { fov, tilt, pan, speed, locked_controls, node, pause };

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tourbuilder Test</title>
     <link rel = "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-    <script type="module" src="./dist/class-tourbuilder-360ty.js"></script>
+    <script src="./dist/index.iife.js"></script>
     <link rel = "stylesheet" href="./dist/style.css">
     <script src="https://bregenzsommer.360ty.cloud/skin.js"></script>
 </head>
@@ -14,10 +14,10 @@
     <div id="360ty_container" style="height:50vh;width:80%"></div>
     <script>
         let interval = setInterval(()=>{
-            if(window["Pano_360ty"]){
+            if(window["Pano360ty"]){
                 clearInterval(interval)
-                
-			var tour_360ty = new Pano_360ty("360ty_container","https://bregenzsommer.360ty.cloud/",undefined,"https://bregenzsommer.360ty.cloud/ostern.xml");
+                console.log("Pano_360ty loaded");
+			var tour_360ty = new Pano360ty.Pano360ty("360ty_container","https://bregenzsommer.360ty.cloud/",undefined,"https://bregenzsommer.360ty.cloud/ostern.xml");
 			tour_360ty.setDimensions("100%","100%");
 			tour_360ty.setHorizontalAlignment("center");
 			tour_360ty.setStartNode(15);
@@ -36,6 +36,7 @@
 			tour_360ty.setShareButtonVisibility_mobile(false);
 			tour_360ty.setImpressumVisibility_mobile(false);
             tour_360ty.setScrollLock(false);
+            tour_360ty.setAllowScreenshot(true);
 			function showOsterHotspots(){
 				tour_360ty.pano.getCurrentPointHotspots().forEach(function(hs_div){
 					let imgEls = hs_div.querySelectorAll(".ggskin_svg")

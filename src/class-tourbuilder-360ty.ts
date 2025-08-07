@@ -213,6 +213,15 @@ getTourParams=()=>{
 		},50);
 	})
 }
+takeScreenshot = async(imageType:"webp" | "jpeg" = "jpeg") => {
+	if(!this.settings.tourParams.allowScreenshot) {
+		console.error("Screenshot not allowed. Set allowScreenshot to true in the tour parameters.");
+		return null;
+	}
+	await this.waitForPanoLoad();
+	const screenshot = this.elements.container?.querySelector("canvas")?.toDataURL("image/"+imageType, 1.0);
+	return screenshot || null;
+}
 private renameElementIds = () =>{
 	if(!this.suffix || this.suffix === ""){
 		this.suffix = Math.random().toString(36).substring(2,7)
@@ -252,6 +261,7 @@ setShareButtonVisibility = (bool: boolean) => this.settings.setShareButtonVisibi
 setImpressumVisibility = (bool:boolean) => this.settings.setImpressumVisibility(bool);
 setHorizontalAlignment = (value: HorizonalAlignment) => this.settings.setHorizontalAlignment(value);
 setSkinClass = (newClass: typeof pano2vrSkin) => { this.skinClass = newClass };
+setAllowScreenshot = (bool: boolean) => this.settings.setAllowScreenshot(bool);
 useBasepathSkin = () => { this.skinClass = this.tour_params.basepath + "skin.js"; };
 addNodeTitleFilter = (filter: string, caseSensitive?: boolean) => this.settings.addNodeTitleFilter(filter,caseSensitive);
 removeExternalHotspots = () => this.settings.removeExternalHotspots();
@@ -425,7 +435,7 @@ setup_pano = () => {
 			if(!this.elements.container){
 				this.createContainer();
 			}
-			this.pano=new this.p2vrPlayer(this.elementIDs.container,this.tour_params.basepath);
+			this.pano=new this.p2vrPlayer(this.elementIDs.container,{ webGLFlags: { preserveDrawingBuffer:true } });
 				//@ts-expect-error
 
 			if(window) window.pano = this.pano;

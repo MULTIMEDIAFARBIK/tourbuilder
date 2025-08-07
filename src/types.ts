@@ -77,6 +77,7 @@ export interface TourParams {
     pan: null | undefined | number;
     roll: null | undefined | number;
     nodeFilter : NodeTitleFilter[];
+    allowScreenshot: boolean;
     removeExternals: boolean;
     removeDrones: boolean;
     confFile? : string;
